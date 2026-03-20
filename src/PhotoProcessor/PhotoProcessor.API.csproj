@@ -10,4 +10,8 @@
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\Core\src\pzellhorn.Core.API\pzellhorn.Core.API.csproj" />
+  </ItemGroup>
+
 </Project>
