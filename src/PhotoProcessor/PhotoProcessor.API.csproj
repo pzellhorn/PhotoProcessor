@@ -14,4 +14,8 @@
     <ProjectReference Include="..\..\Core\src\pzellhorn.Core.API\pzellhorn.Core.API.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Controllers\" />
+  </ItemGroup>
+
 </Project>
