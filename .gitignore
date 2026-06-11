@@ -361,3 +361,12 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Environment variable files (contain credentials)
+.env
+.env.local
+.env.*.local
+/src/PhotoProcessor/appsettings.json
+/src/PhotoProcessor/appsettings.Development.json
+/src/PhotoProcessor.State/appsettings.Development.json
+/src/PhotoProcessor.State/appsettings.json

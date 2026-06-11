@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Core\src\pzellhorn.Core.API\pzellhorn.Core.API.csproj" />
+    <ProjectReference Include="..\PhotoProcessor.State\PhotoProcessor.State.csproj" />
   </ItemGroup>
 
   <ItemGroup>
