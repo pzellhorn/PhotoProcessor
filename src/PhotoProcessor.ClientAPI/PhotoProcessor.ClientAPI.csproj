@@ -6,4 +6,9 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\Core\src\pzellhorn.Core.ClientAPI\pzellhorn.Core.ClientAPI.csproj" />
+    <ProjectReference Include="..\PhotoProcessor.DTO\PhotoProcessor.DTO.csproj" />
+  </ItemGroup>
+
 </Project>
