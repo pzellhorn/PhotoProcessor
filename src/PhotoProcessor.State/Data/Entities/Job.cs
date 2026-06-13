@@ -23,6 +23,8 @@ public partial class Job : IIsDeleted, ICreatedAt, IModifiedAt, IPrimaryKeySelec
     public DateTime ModifiedAt { get; set; }
      
     public static Expression<Func<Job, Guid>> PrimaryKey => e => e.JobId;
+
+    public MediaItem MediaItem { get; set; } = null!;
 }
 
 internal sealed class JobConfig : BaseConfig<Job>
@@ -32,6 +34,9 @@ internal sealed class JobConfig : BaseConfig<Job>
         base.Configure(entity);
 
         entity.ToTable("jobs");
-         
+
+        entity.HasOne(e => e.MediaItem)
+            .WithMany(e => e.Jobs)
+            .HasForeignKey(e => e.MediaId);
     }
 }

@@ -19,6 +19,8 @@ public partial class TagType : IIsDeleted, ICreatedAt, IModifiedAt, IPrimaryKeyS
     public DateTime ModifiedAt { get; set; }
      
     public static Expression<Func<TagType, Guid>> PrimaryKey => e => e.TagTypeId;
+
+    public ICollection<Tag> Tags { get; set; } = [];
 }
 
 internal sealed class TagTypeConfig : BaseConfig<TagType>

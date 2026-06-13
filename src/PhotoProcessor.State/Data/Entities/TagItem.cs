@@ -27,6 +27,9 @@ public partial class TagItem : IIsDeleted, ICreatedAt, IModifiedAt, IPrimaryKeyS
     public DateTime ModifiedAt { get; set; }
      
     public static Expression<Func<TagItem, Guid>> PrimaryKey => e => e.TagItemId;
+
+    public Tag Tag { get; set; } = null!;
+    public MediaItem MediaItem { get; set; } = null!;
 }
 
 internal sealed class TagItemConfig : BaseConfig<TagItem>
@@ -36,6 +39,13 @@ internal sealed class TagItemConfig : BaseConfig<TagItem>
         base.Configure(entity);
 
         entity.ToTable("tag_items");
-         
+
+        entity.HasOne(e => e.Tag)
+            .WithMany(e => e.TagItems)
+            .HasForeignKey(e => e.TagId);
+
+        entity.HasOne(e => e.MediaItem)
+            .WithMany(e => e.TagItems)
+            .HasForeignKey(e => e.MediaId);
     }
 }

@@ -27,6 +27,9 @@ public partial class MediaItem : IIsDeleted, ICreatedAt, IModifiedAt, IPrimaryKe
     public DateTime ModifiedAt { get; set; }
      
     public static Expression<Func<MediaItem, Guid>> PrimaryKey => e => e.MediaItemId;
+
+    public ICollection<Job> Jobs { get; set; } = [];
+    public ICollection<TagItem> TagItems { get; set; } = [];
 }
 
 internal sealed class MediaItemConfig : BaseConfig<MediaItem>

@@ -21,6 +21,9 @@ public partial class Tag : IIsDeleted, ICreatedAt, IModifiedAt, IPrimaryKeySelec
     public DateTime ModifiedAt { get; set; }
      
     public static Expression<Func<Tag, Guid>> PrimaryKey => e => e.TagId;
+
+    public TagType TagType { get; set; } = null!;
+    public ICollection<TagItem> TagItems { get; set; } = [];
 }
 
 internal sealed class TagConfig : BaseConfig<Tag>
@@ -30,6 +33,9 @@ internal sealed class TagConfig : BaseConfig<Tag>
         base.Configure(entity);
 
         entity.ToTable("tags");
-         
+
+        entity.HasOne(e => e.TagType)
+            .WithMany(e => e.Tags)
+            .HasForeignKey(e => e.TagTypeId);
     }
 }
