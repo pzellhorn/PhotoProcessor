@@ -8,7 +8,10 @@ public class PhotoProcessorDbContextFactory : IDesignTimeDbContextFactory<PhotoP
 {
     public PhotoProcessorDbContext CreateDbContext(string[] args)
     {
-        var basePath = Directory.GetCurrentDirectory();
+        string solutionRoot = Directory.GetCurrentDirectory();
+        string apiPath = Path.Combine(solutionRoot, "src", "PhotoProcessor");
+        string basePath = Directory.Exists(apiPath) ? apiPath : solutionRoot;
+
         IConfigurationRoot config = new ConfigurationBuilder()
             .SetBasePath(basePath)
             .AddJsonFile("appsettings.json", optional: true)
@@ -16,9 +19,7 @@ public class PhotoProcessorDbContextFactory : IDesignTimeDbContextFactory<PhotoP
             .AddEnvironmentVariables()
             .Build();
 
-        string conn =
-            config.GetConnectionString("Local")
-            ?? throw new ArgumentException("Local connection string not found");
+        string conn = config.GetConnectionString("Local") ?? throw new ArgumentException("Local connection string not found");
 
         DbContextOptions<PhotoProcessorDbContext> options = new DbContextOptionsBuilder<PhotoProcessorDbContext>()
             .UseNpgsql(conn, migrations => migrations.MigrationsAssembly("PhotoProcessor.State"))
