@@ -14,5 +14,11 @@ namespace PhotoProcessor.Logic.DTOAdapters.DTOAdapters
         : DtoLogicAdapter<MediaItem, MediaItemRequest, MediaItemResponse>(mediaItemLogic, mapper),
           IMediaItemDtoAdapter
     {
+        public async Task<MediaItemResponse> IngestPhoto(MediaItemRequest request, CancellationToken cancellationToken = default)
+        {
+            MediaItem entity = mapper.CreateEntity(request);
+            MediaItem ingested = await mediaItemLogic.IngestPhoto(entity, cancellationToken);
+            return mapper.ToResponse(ingested);
+        }
     }
 }

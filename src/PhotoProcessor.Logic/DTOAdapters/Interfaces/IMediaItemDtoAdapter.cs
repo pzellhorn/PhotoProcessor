@@ -5,6 +5,7 @@ using pzellhorn.Core.Logic.Base.DTOAdapter;
 namespace PhotoProcessor.DTO.DTOAdapters.Interfaces
 {
     public interface IMediaItemDtoAdapter : IDtoLogicAdapter<MediaItemRequest, MediaItemResponse>
-    {
+    { 
+        Task<MediaItemResponse> IngestPhoto(MediaItemRequest request, CancellationToken cancellationToken = default);
     }
 }

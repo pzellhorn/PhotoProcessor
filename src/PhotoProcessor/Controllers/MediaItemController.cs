@@ -10,5 +10,10 @@ namespace PhotoProcessor.API.Controllers
     [Route("api/[controller]")]
     public class MediaItemController(IMediaItemDtoAdapter logic) : BaseController<MediaItemRequest, MediaItemResponse>(logic)
     {
+        [HttpPost(nameof(IngestPhoto))]
+        public async Task<ActionResult<MediaItemResponse>> IngestPhoto([FromBody] MediaItemRequest request, CancellationToken cancellationToken)
+        {
+            return Ok(await logic.IngestPhoto(request, cancellationToken));
+        } 
     }
 }

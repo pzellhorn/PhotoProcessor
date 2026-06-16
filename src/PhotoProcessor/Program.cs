@@ -1,18 +1,15 @@
 using Microsoft.EntityFrameworkCore;
+using PhotoProcessor.Logic.Extensions;
 using PhotoProcessor.State;
-using pzellhorn.Core.State.Base.DBContext;
+using PhotoProcessor.State.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
-builder.Services.AddDbContext<PhotoProcessorDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("Local"),
-        migrations => migrations.MigrationsAssembly("PhotoProcessor.State"))
-        .UseSnakeCaseNamingConvention());
-
-builder.Services.AddScoped<BaseDbContext>(ctx => ctx.GetRequiredService<PhotoProcessorDbContext>());
+builder.Services.AddStateServices(builder.Configuration);
+builder.Services.AddLogicServices();
 
 var app = builder.Build();
 
