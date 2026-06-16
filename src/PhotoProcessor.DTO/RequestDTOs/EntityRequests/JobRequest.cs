@@ -20,6 +20,6 @@ namespace PhotoProcessor.DTO.RequestDTOs.EntityRequests
 
         public JobTypes JobType { get; set; } = JobTypes.None;
 
-        public JobStatus Status { get; set; } = JobStatus.None;
+        public JobStatus Status { get; set; } = JobStatus.None; 
     }
 }

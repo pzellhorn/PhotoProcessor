@@ -1,3 +1,4 @@
+using PhotoProcessor.DTO.enums;
 using PhotoProcessor.DTO.RequestDTOs.EntityRequests;
 using PhotoProcessor.DTO.ResponseDTOs.EntityResponses;
 using PhotoProcessor.State.Data.Entities;
@@ -13,19 +14,19 @@ namespace PhotoProcessor.Logic.DTOMappers
         public void ApplyRequestToModel(JobRequest request, Job model)
         {
             model.MediaId = request.MediaId;
-            model.JobType = request.JobType;
-            model.Status = request.Status;
+            model.JobType = (int)request.JobType;
+            model.Status = (int)request.Status;
         }
 
         public Job CreateEntity(JobRequest request)
         => new()
         {
             MediaId = request.MediaId,
-            JobType = request.JobType,
-            Status = request.Status,
+            JobType = (int)request.JobType,
+            Status = (int)request.Status,
         };
 
         public JobResponse ToResponse(Job model)
-        => new(model.JobId, model.MediaId, model.JobType, model.Status);
+        => new(model.JobId, model.MediaId, (JobTypes)model.JobType, (JobStatus)model.Status);
     }
 }

@@ -1,3 +1,4 @@
+using PhotoProcessor.DTO.enums;
 using PhotoProcessor.DTO.RequestDTOs.EntityRequests;
 using PhotoProcessor.DTO.ResponseDTOs.EntityResponses;
 using PhotoProcessor.State.Data.Entities;
@@ -12,7 +13,7 @@ namespace PhotoProcessor.Logic.DTOMappers
 
         public void ApplyRequestToModel(MediaItemRequest request, MediaItem model)
         {
-            model.MediaType = request.MediaType;
+            model.MediaType = (int)request.MediaType;
             model.Uri = request.Uri;
             model.ThumbnailUri = request.ThumbnailUri;
             model.ContentHash = request.ContentHash;
@@ -22,7 +23,7 @@ namespace PhotoProcessor.Logic.DTOMappers
         public MediaItem CreateEntity(MediaItemRequest request)
         => new()
         {
-            MediaType = request.MediaType,
+            MediaType = (int)request.MediaType,
             Uri = request.Uri,
             ThumbnailUri = request.ThumbnailUri,
             ContentHash = request.ContentHash,
@@ -30,6 +31,6 @@ namespace PhotoProcessor.Logic.DTOMappers
         };
 
         public MediaItemResponse ToResponse(MediaItem model)
-        => new(model.MediaItemId, model.MediaType, model.Uri, model.ThumbnailUri, model.ContentHash, model.DurationMs);
+        => new(model.MediaItemId, (MediaItemType)model.MediaType, model.Uri, model.ThumbnailUri, model.ContentHash, model.DurationMs);
     }
 }

@@ -5,8 +5,7 @@ using PhotoProcessor.Logic.ServiceLogic;
 using pzellhorn.Core.State.Storage;
 
 namespace PhotoProcessor.API.Controllers
-{ 
-    {
+{  
     [ApiController]
     [Route("api/[controller]")]
     public class PhotoController(IPhotoLogic photoLogic) : Controller

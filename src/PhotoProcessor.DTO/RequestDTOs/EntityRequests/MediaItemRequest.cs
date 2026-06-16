@@ -1,10 +1,12 @@
+using PhotoProcessor.DTO.enums;
+
 namespace PhotoProcessor.DTO.RequestDTOs.EntityRequests
 {
     public class MediaItemRequest
     {
         public MediaItemRequest() { }
 
-        public MediaItemRequest(Guid? mediaItemId, int mediaType, string uri, string thumbnailUri, string contentHash, double? durationMs)
+        public MediaItemRequest(Guid? mediaItemId, MediaItemType mediaType, string uri, string thumbnailUri, string contentHash, double? durationMs)
         {
             MediaItemId = mediaItemId;
             MediaType = mediaType;
@@ -16,7 +18,7 @@ namespace PhotoProcessor.DTO.RequestDTOs.EntityRequests
 
         public Guid? MediaItemId { get; set; }
 
-        public int MediaType { get; set; }
+        public MediaItemType MediaType { get; set; }
 
         public string Uri { get; set; }
 
