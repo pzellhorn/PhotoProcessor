@@ -6,10 +6,6 @@ namespace PhotoProcessor.Logic.EntityLogic
 {
     public class MediaItemLogic(IBaseRepository<MediaItem> mediaItemRepository) : BaseLogic<MediaItem>(mediaItemRepository)
     { 
-        public async Task<MediaItem> IngestPhoto(MediaItem mediaItem, CancellationToken cancellationToken = default)
-        {
-            mediaItem.MediaType = (int)MediaItemType.Photo;
-            return default;
-        }
+       
     }
 }

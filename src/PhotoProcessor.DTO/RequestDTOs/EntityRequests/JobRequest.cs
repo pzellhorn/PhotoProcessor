@@ -1,10 +1,12 @@
+using PhotoProcessor.DTO.enums;
+
 namespace PhotoProcessor.DTO.RequestDTOs.EntityRequests
 {
     public class JobRequest
     {
         public JobRequest() { }
 
-        public JobRequest(Guid? jobId, Guid mediaId, int jobType, int status)
+        public JobRequest(Guid? jobId, Guid mediaId, JobTypes jobType, JobStatus status)
         {
             JobId = jobId;
             MediaId = mediaId;
@@ -16,8 +18,8 @@ namespace PhotoProcessor.DTO.RequestDTOs.EntityRequests
 
         public Guid MediaId { get; set; }
 
-        public int JobType { get; set; }
+        public JobTypes JobType { get; set; } = JobTypes.None;
 
-        public int Status { get; set; }
+        public JobStatus Status { get; set; } = JobStatus.None;
     }
 }
