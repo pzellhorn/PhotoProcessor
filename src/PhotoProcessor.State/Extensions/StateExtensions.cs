@@ -25,8 +25,7 @@ namespace PhotoProcessor.State.Extensions
              
             services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
 
-            // Filesystem media storage; root configurable via Storage:DiskRoot.
-            services.AddDiskStorage(configuration["Storage:DiskRoot"] ?? @"G:\dev\photos");
+            services.AddS3Storage(configuration);
 
             return services;
         }
