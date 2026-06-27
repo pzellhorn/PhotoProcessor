@@ -17,11 +17,13 @@ namespace PhotoProcessor.Logic.Extensions
         { 
             services.AddScoped<MediaItemLogic>();
             services.AddScoped<JobLogic>();
+            services.AddScoped<FingerprintLogic>();
             services.AddScoped<TagLogic>();
             services.AddScoped<TagItemLogic>();
             services.AddScoped<TagTypeLogic>();
 
             services.AddScoped<IPhotoLogic, PhotoLogic>();
+            services.AddScoped<IFingerprintSubmissionLogic, FingerprintSubmissionLogic>();
 
             services.AddScoped<IDTOMapper<MediaItem, MediaItemRequest, MediaItemResponse>, MediaItemMapper>();
             services.AddScoped<IDTOMapper<Job, JobRequest, JobResponse>, JobMapper>();

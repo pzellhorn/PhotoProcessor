@@ -9,6 +9,8 @@ namespace PhotoProcessor.State.Data.Entities;
 
 public partial class Fingerprint : IIsDeleted, ICreatedAt, IModifiedAt, IPrimaryKeySelector<Fingerprint>
 {
+    public const int EmbeddingDimensions = 512;
+
     public Guid FingerprintId { get; set; }
 
     public Guid MediaId { get; set; }
@@ -44,7 +46,7 @@ internal sealed class FingerprintConfig : BaseConfig<Fingerprint>
         entity.ToTable("fingerprints");
 
         entity.Property(e => e.Embedding)
-            .HasColumnType("vector(512)");
+            .HasColumnType($"vector({Fingerprint.EmbeddingDimensions})");
 
         entity.HasOne(e => e.MediaItem)
             .WithMany(e => e.Fingerprints)
