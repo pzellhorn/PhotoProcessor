@@ -30,6 +30,7 @@ public partial class MediaItem : IIsDeleted, ICreatedAt, IModifiedAt, IPrimaryKe
 
     public ICollection<Job> Jobs { get; set; } = [];
     public ICollection<TagItem> TagItems { get; set; } = [];
+    public ICollection<Fingerprint> Fingerprints { get; set; } = [];
 }
 
 internal sealed class MediaItemConfig : BaseConfig<MediaItem>
