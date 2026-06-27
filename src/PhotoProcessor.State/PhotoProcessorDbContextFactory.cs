@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
+using Pgvector.EntityFrameworkCore;
 
 namespace PhotoProcessor.State;
 
@@ -22,7 +23,11 @@ public class PhotoProcessorDbContextFactory : IDesignTimeDbContextFactory<PhotoP
         string conn = config.GetConnectionString("Local") ?? throw new ArgumentException("Local connection string not found");
 
         DbContextOptions<PhotoProcessorDbContext> options = new DbContextOptionsBuilder<PhotoProcessorDbContext>()
-            .UseNpgsql(conn, migrations => migrations.MigrationsAssembly("PhotoProcessor.State"))
+            .UseNpgsql(conn, npgsql =>
+            {
+                npgsql.MigrationsAssembly("PhotoProcessor.State");
+                npgsql.UseVector();
+            })
             .UseSnakeCaseNamingConvention()
             .Options;
 

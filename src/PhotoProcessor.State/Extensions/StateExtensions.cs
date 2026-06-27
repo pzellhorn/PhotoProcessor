@@ -14,7 +14,11 @@ namespace PhotoProcessor.State.Extensions
         {
             services.AddDbContext<PhotoProcessorDbContext>(options =>
                 options.UseNpgsql(configuration.GetConnectionString("Local"),
-                    migrations => migrations.MigrationsAssembly("PhotoProcessor.State"))
+                    npgsql =>
+                    {
+                        npgsql.MigrationsAssembly("PhotoProcessor.State");
+                        npgsql.UseVector();
+                    })
                     .UseSnakeCaseNamingConvention());
 
             services.AddScoped<BaseDbContext>(ctx => ctx.GetRequiredService<PhotoProcessorDbContext>());
