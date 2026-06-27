@@ -15,13 +15,6 @@ namespace PhotoProcessor.API.Controllers
             return Ok(new CreateUploadResponse(mediaId, uploadUrl.ToString()));
         }
 
-        [HttpPost(nameof(CompleteUpload))]
-        public async Task<ActionResult> CompleteUpload(Guid mediaId, CancellationToken cancellationToken)
-        {
-            Guid jobId = await photoLogic.CompleteUpload(mediaId, cancellationToken);
-            return Ok(new { jobId });
-        }
-
         [HttpGet(nameof(GetDownloadUrl))]
         public async Task<ActionResult> GetDownloadUrl(Guid mediaId, CancellationToken cancellationToken)
         {

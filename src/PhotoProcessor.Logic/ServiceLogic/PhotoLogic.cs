@@ -10,11 +10,11 @@ namespace PhotoProcessor.Logic.ServiceLogic
     public interface IPhotoLogic
     {
         Task<(Guid MediaId, Uri UploadUrl)> CreateUpload(string fileName, CancellationToken cancellationToken = default);
-        Task<Guid> CompleteUpload(Guid mediaId, CancellationToken cancellationToken = default);
+        Task<Guid> EnqueueProcessing(Guid mediaId, JobTypes jobType, CancellationToken cancellationToken = default);
         Task<Uri> GetDownloadUrl(Guid mediaId, CancellationToken cancellationToken = default);
     }
 
-    public class PhotoLogic(IStorageManager storageManager, ISignedUrlProvider signedUrlProvider, IQueuePublisher queuePublisher, JobLogic jobLogic, MediaItemLogic mediaItemLogic) : IPhotoLogic
+    public class PhotoLogic(ISignedUrlProvider signedUrlProvider, IQueuePublisher queuePublisher, JobLogic jobLogic, MediaItemLogic mediaItemLogic) : IPhotoLogic
     {
         private static readonly TimeSpan UrlLifetime = TimeSpan.FromMinutes(30);
          
@@ -29,20 +29,25 @@ namespace PhotoProcessor.Logic.ServiceLogic
             Uri uploadUrl = await signedUrlProvider.GetUploadUrl(storageKey, UrlLifetime, cancellationToken);
             return (mediaId, uploadUrl);
         }
-         
-        public async Task<Guid> CompleteUpload(Guid mediaId, CancellationToken cancellationToken = default)
+
+        /// <summary>
+        /// Fires after a storage upload is completed via S3 bucket emitted event
+        /// </summary>
+        /// <param name="mediaId"></param>
+        /// <param name="jobType"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        /// <exception cref="KeyNotFoundException"></exception>
+        public async Task<Guid> EnqueueProcessing(Guid mediaId, JobTypes jobType, CancellationToken cancellationToken = default)
         {
             MediaItem media = await mediaItemLogic.Get(mediaId, cancellationToken) ?? throw new KeyNotFoundException($"Media {mediaId} not found.");
-
-            if (!await storageManager.Exists(media.Uri, cancellationToken))
-                throw new InvalidOperationException($"No uploaded object found for media {mediaId}.");
 
             Guid jobId = Guid.NewGuid();
             Job job = new()
             {
                 JobId = jobId,
                 MediaId = mediaId,
-                JobType = (int)JobTypes.FaceRecognition,
+                JobType = (int)jobType,
                 Status = (int)JobStatus.Queued,
             };
             await jobLogic.Upsert(job, cancellationToken);
@@ -50,12 +55,12 @@ namespace PhotoProcessor.Logic.ServiceLogic
             JobMessage message = new(
                 JobId: jobId,
                 MediaId: mediaId,
-                JobType: JobTypes.FaceRecognition,
+                JobType: jobType,
                 MediaUri: media.Uri);
             await queuePublisher.Publish("jobs", message, cancellationToken);
 
             return jobId;
-        }
+        } 
 
         public async Task<Uri> GetDownloadUrl(Guid mediaId, CancellationToken cancellationToken = default)
         {

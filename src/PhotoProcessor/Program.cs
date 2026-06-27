@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
+using PhotoProcessor.API.BackgroundServices;
 using PhotoProcessor.Logic.Extensions;
 using PhotoProcessor.State;
 using PhotoProcessor.State.Extensions;
+using pzellhorn.Core.Messaging;
 using pzellhorn.Core.Messaging.RabbitMq;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,6 +14,14 @@ builder.Services.AddOpenApi();
 builder.Services.AddStateServices(builder.Configuration);
 builder.Services.AddLogicServices();
 builder.Services.AddDistributedQueueRabbitMq(builder.Configuration);
+
+UploadEventOptions photoUploadEvents = builder.Configuration.GetSection("PhotoUploadEvents").Get<UploadEventOptions>() ?? throw new Exception("Can't find PhotoUploadEvents in config");
+
+builder.Services.AddHostedService(sp => new UploadEventConsumer(
+    sp.GetRequiredService<IQueueConsumer>(),
+    sp.GetRequiredService<IServiceScopeFactory>(),
+    photoUploadEvents,
+    sp.GetRequiredService<ILogger<UploadEventConsumer>>()));
 
 var app = builder.Build();
 
