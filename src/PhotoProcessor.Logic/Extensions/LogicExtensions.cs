@@ -5,6 +5,7 @@ using PhotoProcessor.DTO.ResponseDTOs.EntityResponses;
 using PhotoProcessor.Logic.DTOAdapters.DTOAdapters;
 using PhotoProcessor.Logic.DTOMappers;
 using PhotoProcessor.Logic.EntityLogic;
+using PhotoProcessor.Logic.ServiceLogic;
 using PhotoProcessor.State.Data.Entities;
 using pzellhorn.Core.Logic.Base;
 
@@ -19,7 +20,9 @@ namespace PhotoProcessor.Logic.Extensions
             services.AddScoped<TagLogic>();
             services.AddScoped<TagItemLogic>();
             services.AddScoped<TagTypeLogic>();
-             
+
+            services.AddScoped<IPhotoLogic, PhotoLogic>();
+
             services.AddScoped<IDTOMapper<MediaItem, MediaItemRequest, MediaItemResponse>, MediaItemMapper>();
             services.AddScoped<IDTOMapper<Job, JobRequest, JobResponse>, JobMapper>();
             services.AddScoped<IDTOMapper<Tag, TagRequest, TagResponse>, TagMapper>();
