@@ -1,24 +1,32 @@
-﻿using System.IO;
 using Microsoft.AspNetCore.Mvc;
-using PhotoProcessor.DTO.ResponseDTOs.EntityResponses;
+using PhotoProcessor.DTO.ServiceDTOs;
 using PhotoProcessor.Logic.ServiceLogic;
-using pzellhorn.Core.State.Storage;
 
 namespace PhotoProcessor.API.Controllers
-{  
+{
     [ApiController]
     [Route("api/[controller]")]
     public class PhotoController(IPhotoLogic photoLogic) : Controller
-    { 
-        [HttpPost(nameof(IngestPhoto))]
-        public async Task<ActionResult> IngestPhoto(IFormFile file, CancellationToken cancellationToken)
+    {
+        [HttpPost(nameof(CreateUpload))]
+        public async Task<ActionResult<CreateUploadResponse>> CreateUpload([FromBody] CreateUploadRequest request, CancellationToken cancellationToken)
         {
-            await using Stream stream = file.OpenReadStream();
-
-            await photoLogic.IngestPhoto(file.FileName, stream, cancellationToken);
-
-            return Ok();  
+            (Guid mediaId, Uri uploadUrl) = await photoLogic.CreateUpload(request.FileName, cancellationToken);
+            return Ok(new CreateUploadResponse(mediaId, uploadUrl.ToString()));
         }
 
-    } 
+        [HttpPost(nameof(CompleteUpload))]
+        public async Task<ActionResult> CompleteUpload(Guid mediaId, CancellationToken cancellationToken)
+        {
+            Guid jobId = await photoLogic.CompleteUpload(mediaId, cancellationToken);
+            return Ok(new { jobId });
+        }
+
+        [HttpGet(nameof(GetDownloadUrl))]
+        public async Task<ActionResult> GetDownloadUrl(Guid mediaId, CancellationToken cancellationToken)
+        {
+            Uri url = await photoLogic.GetDownloadUrl(mediaId, cancellationToken);
+            return Ok(new { url = url.ToString() });
+        }
+    }
 }
