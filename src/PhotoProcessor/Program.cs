@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using PhotoProcessor.Logic.Extensions;
 using PhotoProcessor.State;
 using PhotoProcessor.State.Extensions;
+using pzellhorn.Core.Messaging.RabbitMq;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,6 +11,7 @@ builder.Services.AddOpenApi();
 
 builder.Services.AddStateServices(builder.Configuration);
 builder.Services.AddLogicServices();
+builder.Services.AddDistributedQueueRabbitMq(builder.Configuration);
 
 var app = builder.Build();
 
