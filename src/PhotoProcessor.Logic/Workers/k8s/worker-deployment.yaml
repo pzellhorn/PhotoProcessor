@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: face-recognition-worker
+  labels:
+    app: face-recognition-worker
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: face-recognition-worker
+  template:
+    metadata:
+      labels:
+        app: face-recognition-worker
+    spec: 
+      terminationGracePeriodSeconds: 60
+      containers:
+        - name: worker
+          image: photoprocessor/face-recognition-worker:latest 
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: face-worker-config
+            - secretRef:
+                name: face-worker-secret
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "2"
+              memory: "2Gi"
