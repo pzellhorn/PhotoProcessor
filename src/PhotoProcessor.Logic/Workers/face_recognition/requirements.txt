@@ -1,2 +1,6 @@
 pika
 requests
+insightface
+onnxruntime
+numpy
+opencv-python-headless

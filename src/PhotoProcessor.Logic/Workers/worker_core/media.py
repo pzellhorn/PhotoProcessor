@@ -1,10 +1,9 @@
-import os 
 import requests
 
-API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:5030")
+from worker_core.config import API_BASE_URL
 
 
-def fetch_media_bytes(media_id: str, timeout: float = 30.0) -> bytes: 
+def fetch_media_bytes(media_id: str, timeout: float = 30.0) -> bytes:
     response = requests.get(
         f"{API_BASE_URL}/api/Photo/GetDownloadUrl",
         params={"mediaId": media_id},
