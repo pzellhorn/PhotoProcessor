@@ -16,6 +16,8 @@ public partial class Job : IIsDeleted, ICreatedAt, IModifiedAt, IPrimaryKeySelec
 
     public int Status { get; set; }
 
+    public string? Error { get; set; }
+
     public bool IsDeleted { get; set; }
 
     public DateTime CreatedAt { get; set; }

@@ -19,6 +19,7 @@ namespace PhotoProcessor.Logic.EntityLogic
         {
             Job job = await Get(jobId, cancellationToken) ?? throw new KeyNotFoundException($"Job {jobId} not found.");
             job.Status = (int)JobStatus.Failed;
+            job.Error = error;
             await Upsert(job, cancellationToken);
 
             logger.LogWarning("Job {JobId} marked failed: {Error}", jobId, error ?? "(no detail)");
