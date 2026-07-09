@@ -11,6 +11,7 @@ namespace PhotoProcessor.Logic.ServiceLogic
         Task AssignForMedia(Guid mediaId, CancellationToken cancellationToken = default); 
         Task<List<IdentitySummary>> ListIdentities(CancellationToken cancellationToken = default); 
         Task<List<FingerprintSummary>> GetFacesForTag(Guid tagId, CancellationToken cancellationToken = default);
+        Task Merge(Guid sourceTagId, Guid targetTagId, CancellationToken cancellationToken = default);
     }
 
     public class IdentityLogic(
@@ -113,6 +114,33 @@ namespace PhotoProcessor.Logic.ServiceLogic
             }
 
             return summaries;
+        }
+
+        /// <summary> 
+        /// Move every face from the source identity onto the target, then kill the source tag
+        /// </summary>
+        /// <param name="sourceTagId"></param>
+        /// <param name="targetTagId"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
+        /// <exception cref="KeyNotFoundException"></exception>
+        public async Task Merge(Guid sourceTagId, Guid targetTagId, CancellationToken cancellationToken = default)
+        {
+            if (sourceTagId == targetTagId)
+                throw new ArgumentException("Cannot merge an identity into itself.", nameof(targetTagId));
+
+            _ = await tagLogic.Get(sourceTagId, cancellationToken) ?? throw new KeyNotFoundException($"Identity {sourceTagId} not found.");
+            _ = await tagLogic.Get(targetTagId, cancellationToken) ?? throw new KeyNotFoundException($"Identity {targetTagId} not found.");
+
+            List<Fingerprint> faces = await fingerprintLogic.GetFor(sourceTagId, f => f.TagId, cancellationToken);
+            foreach (Fingerprint face in faces)
+            {
+                face.TagId = targetTagId;
+                await fingerprintLogic.Upsert(face, cancellationToken);
+            }
+
+            await tagLogic.Delete(sourceTagId, cancellationToken);
         }
 
         private async Task<Guid> EnsurePersonTagType(CancellationToken cancellationToken)

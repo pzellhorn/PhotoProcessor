@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using PhotoProcessor.DTO.ServiceDTOs;
 using PhotoProcessor.Logic.ServiceLogic;
 
 namespace PhotoProcessor.API.Controllers
@@ -8,18 +7,38 @@ namespace PhotoProcessor.API.Controllers
     [Route("api/[controller]")]
     public class PhotoController(IPhotoLogic photoLogic) : Controller
     {
-        [HttpPost(nameof(CreateUpload))]
-        public async Task<ActionResult<CreateUploadResponse>> CreateUpload([FromBody] CreateUploadRequest request, CancellationToken cancellationToken)
-        {
-            (Guid mediaId, Uri uploadUrl) = await photoLogic.CreateUpload(request.FileName, cancellationToken);
-            return Ok(new CreateUploadResponse(mediaId, uploadUrl.ToString()));
-        }
-
+        
         [HttpGet(nameof(GetDownloadUrl))]
         public async Task<ActionResult> GetDownloadUrl(Guid mediaId, CancellationToken cancellationToken)
         {
             Uri url = await photoLogic.GetDownloadUrl(mediaId, cancellationToken);
             return Ok(new { url = url.ToString() });
+        }
+
+        [HttpPost(nameof(Upload))]
+        [DisableRequestSizeLimit]
+        public async Task<ActionResult> Upload(IFormFile file, CancellationToken cancellationToken)
+        {
+            if (file is null || file.Length == 0)
+                return BadRequest("No file provided.");
+
+            await using Stream content = file.OpenReadStream();
+            Guid mediaId = await photoLogic.Upload(file.FileName, content, cancellationToken);
+            return Ok(new { mediaId });
+        }
+
+        [HttpGet(nameof(Download))]
+        public async Task<ActionResult> Download([FromQuery] Guid mediaId, CancellationToken cancellationToken)
+        {
+            (Stream stream, string contentType) = await photoLogic.GetImage(mediaId, cancellationToken);
+            return File(stream, contentType);
+        }
+
+        [HttpGet(nameof(Thumbnail))]
+        public async Task<ActionResult> Thumbnail([FromQuery] Guid mediaId, [FromQuery] int width, CancellationToken cancellationToken)
+        {
+            Stream stream = await photoLogic.GetThumbnail(mediaId, width <= 0 ? 320 : width, cancellationToken);
+            return File(stream, "image/jpeg");
         }
     }
 }

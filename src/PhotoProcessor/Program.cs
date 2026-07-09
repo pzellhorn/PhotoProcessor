@@ -11,6 +11,15 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
+//Don't cap request upload size (so we can send super large photos)
+builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
+    options.MultipartBodyLengthLimit = long.MaxValue);
+
+string[] corsOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+builder.Services.AddCors(options =>
+    options.AddDefaultPolicy(policy =>
+        policy.WithOrigins(corsOrigins).AllowAnyHeader().AllowAnyMethod()));
+
 builder.Services.AddStateServices(builder.Configuration);
 builder.Services.AddLogicServices();
 builder.Services.AddDistributedQueueRabbitMq(builder.Configuration);
@@ -39,6 +48,7 @@ if (args.Contains("migrate") || Environment.GetEnvironmentVariable("RUN_MIGRATIO
 }
 
 app.UseHttpsRedirection();
+app.UseCors();
 app.UseAuthorization();
 app.MapControllers();
 

@@ -21,5 +21,12 @@ namespace PhotoProcessor.API.Controllers
             List<FingerprintSummary> faces = await identityLogic.GetFacesForTag(tagId, cancellationToken);
             return Ok(faces);
         }
+
+        [HttpPost(nameof(Merge))]
+        public async Task<ActionResult> Merge([FromBody] MergeIdentitiesRequest request, CancellationToken cancellationToken)
+        {
+            await identityLogic.Merge(request.SourceTagId, request.TargetTagId, cancellationToken);
+            return Ok();
+        }
     }
 }
