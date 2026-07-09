@@ -12,16 +12,11 @@ namespace PhotoProcessor.Logic.DTOMappers
 
         public void ApplyRequestToModel(TagTypeRequest request, TagType model)
         {
-            model.Name = request.Name;
         }
 
-        public TagType CreateEntity(TagTypeRequest request)
-        => new()
-        {
-            Name = request.Name,
-        };
+        public TagType CreateEntity(TagTypeRequest request) => new();
 
         public TagTypeResponse ToResponse(TagType model)
-        => new(model.TagTypeId, model.Name);
+        => new(model.TagTypeId);
     }
 }

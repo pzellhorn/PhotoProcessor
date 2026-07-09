@@ -11,12 +11,11 @@ public partial class Fingerprint : IIsDeleted, ICreatedAt, IModifiedAt, IPrimary
 {
     public const int EmbeddingDimensions = 512;
 
-    public Guid FingerprintId { get; set; }
+    public Guid FingerprintId { get; set; } 
+    public Guid MediaId { get; set; } 
+    public Guid? JobId { get; set; } 
+    public Guid? TagId { get; set; }
 
-    public Guid MediaId { get; set; }
-     
-    public Guid? JobId { get; set; }
-     
     public Vector Embedding { get; set; } = null!;
      
     public double? DetectionScore { get; set; }
@@ -26,15 +25,14 @@ public partial class Fingerprint : IIsDeleted, ICreatedAt, IModifiedAt, IPrimary
     public double? BoundingWidth { get; set; }
     public double? BoundingHeight { get; set; }
 
-    public bool IsDeleted { get; set; }
-
-    public DateTime CreatedAt { get; set; }
-
+    public bool IsDeleted { get; set; } 
+    public DateTime CreatedAt { get; set; } 
     public DateTime ModifiedAt { get; set; }
 
     public static Expression<Func<Fingerprint, Guid>> PrimaryKey => e => e.FingerprintId;
 
-    public MediaItem MediaItem { get; set; } = null!;
+    public MediaItem MediaItem { get; set; } = null!; 
+    public Tag? Tag { get; set; }
 }
 
 internal sealed class FingerprintConfig : BaseConfig<Fingerprint>
@@ -51,6 +49,10 @@ internal sealed class FingerprintConfig : BaseConfig<Fingerprint>
         entity.HasOne(e => e.MediaItem)
             .WithMany(e => e.Fingerprints)
             .HasForeignKey(e => e.MediaId);
+
+        entity.HasOne(e => e.Tag)
+            .WithMany()
+            .HasForeignKey(e => e.TagId);
 
         // Approximate-nearest-neighbour index for cosine-similarity search over embeddings.
         entity.HasIndex(e => e.Embedding)

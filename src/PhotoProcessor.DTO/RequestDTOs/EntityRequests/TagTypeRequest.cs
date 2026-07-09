@@ -4,14 +4,11 @@ namespace PhotoProcessor.DTO.RequestDTOs.EntityRequests
     {
         public TagTypeRequest() { }
 
-        public TagTypeRequest(Guid? tagTypeId, string name)
+        public TagTypeRequest(Guid? tagTypeId)
         {
             TagTypeId = tagTypeId;
-            Name = name;
         }
 
         public Guid? TagTypeId { get; set; }
-
-        public string Name { get; set; }
     }
 }

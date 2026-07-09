@@ -11,7 +11,7 @@ namespace PhotoProcessor.Logic.ServiceLogic
         Task Submit(SubmitFingerprintsRequest request, CancellationToken cancellationToken = default);
     }
 
-    public class FingerprintSubmissionLogic(JobLogic jobLogic, FingerprintLogic fingerprintLogic) : IFingerprintSubmissionLogic
+    public class FingerprintSubmissionLogic(JobLogic jobLogic, FingerprintLogic fingerprintLogic, IIdentityLogic identityLogic) : IFingerprintSubmissionLogic
     {
         public async Task Submit(SubmitFingerprintsRequest request, CancellationToken cancellationToken = default)
         {
@@ -45,6 +45,8 @@ namespace PhotoProcessor.Logic.ServiceLogic
                 await fingerprintLogic.Upsert(fingerprint, cancellationToken);
             }
              
+            await identityLogic.AssignForMedia(mediaId, cancellationToken);
+
             job.Status = (int)JobStatus.Done;
             await jobLogic.Upsert(job, cancellationToken);
         }

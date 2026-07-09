@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Pgvector;
@@ -12,9 +13,11 @@ using PhotoProcessor.State;
 namespace PhotoProcessor.State.Migrations
 {
     [DbContext(typeof(PhotoProcessorDbContext))]
-    partial class PhotoProcessorDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260628040722_AddFingerprintTag")]
+    partial class AddFingerprintTag
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -322,9 +325,10 @@ namespace PhotoProcessor.State.Migrations
                         .HasColumnName("modified_at")
                         .HasDefaultValueSql("now()");
 
-                    b.Property<int>("TagCategory")
-                        .HasColumnType("integer")
-                        .HasColumnName("tag_category");
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("name");
 
                     b.HasKey("TagTypeId")
                         .HasName("pk_tag_types");

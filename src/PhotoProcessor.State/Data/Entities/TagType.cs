@@ -10,7 +10,7 @@ public partial class TagType : IIsDeleted, ICreatedAt, IModifiedAt, IPrimaryKeyS
 {
     public Guid TagTypeId { get; set; }
 
-    public string Name { get; set; } = string.Empty;
+    public int TagCategory { get; set; } = 0;
 
     public bool IsDeleted { get; set; }
 

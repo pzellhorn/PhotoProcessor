@@ -4,14 +4,11 @@ namespace PhotoProcessor.DTO.ResponseDTOs.EntityResponses
     {
         public TagTypeResponse() { }
 
-        public TagTypeResponse(Guid? tagTypeId, string name)
+        public TagTypeResponse(Guid? tagTypeId)
         {
             TagTypeId = tagTypeId;
-            Name = name;
         }
 
         public Guid? TagTypeId { get; set; }
-
-        public string Name { get; set; }
     }
 }

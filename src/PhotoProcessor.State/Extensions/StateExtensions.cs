@@ -25,6 +25,8 @@ namespace PhotoProcessor.State.Extensions
              
             services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
 
+            services.AddScoped<Data.Queries.IFingerprintQueries, Data.Queries.FingerprintQueries>();
+
             services.AddS3Storage(configuration);
 
             return services;
