@@ -23,8 +23,8 @@ namespace PhotoProcessor.API.Controllers
                 return BadRequest("No file provided.");
 
             await using Stream content = file.OpenReadStream();
-            Guid mediaId = await photoLogic.Upload(file.FileName, content, cancellationToken);
-            return Ok(new { mediaId });
+            (Guid mediaId, bool duplicate) = await photoLogic.Upload(file.FileName, content, cancellationToken);
+            return Ok(new { mediaId, duplicate });
         }
 
         [HttpGet(nameof(Download))]

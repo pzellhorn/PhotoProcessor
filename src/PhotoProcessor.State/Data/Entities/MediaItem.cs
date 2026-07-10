@@ -40,6 +40,10 @@ internal sealed class MediaItemConfig : BaseConfig<MediaItem>
         base.Configure(entity);
 
         entity.ToTable("media_items");
-         
+
+        entity.HasIndex(e => e.ContentHash)
+            .IsUnique()
+            .HasFilter("content_hash <> '' AND is_deleted = false");
+
     }
 }

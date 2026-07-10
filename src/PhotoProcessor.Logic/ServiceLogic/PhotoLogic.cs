@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using PhotoProcessor.DTO.enums;
 using PhotoProcessor.DTO.ServiceDTOs;
 using PhotoProcessor.Logic.EntityLogic;
@@ -13,7 +14,7 @@ namespace PhotoProcessor.Logic.ServiceLogic
         Task<Guid> EnqueueProcessing(Guid mediaId, JobTypes jobType, CancellationToken cancellationToken = default);
         Task<Uri> GetDownloadUrl(Guid mediaId, CancellationToken cancellationToken = default);
 
-        Task<Guid> Upload(string fileName, Stream content, CancellationToken cancellationToken = default);
+        Task<(Guid MediaId, bool Duplicate)> Upload(string fileName, Stream content, CancellationToken cancellationToken = default);
         Task<(Stream Stream, string ContentType)> GetImage(Guid mediaId, CancellationToken cancellationToken = default);
         Task<Stream> GetThumbnail(Guid mediaId, int width, CancellationToken cancellationToken = default);
         Task<Stream> GetFaceThumbnail(Guid fingerprintId, int width, CancellationToken cancellationToken = default);
@@ -64,17 +65,24 @@ namespace PhotoProcessor.Logic.ServiceLogic
 
             return await signedUrlProvider.GetDownloadUrl(media.Uri, UrlLifetime, cancellationToken);
         }
-
-        public async Task<Guid> Upload(string fileName, Stream content, CancellationToken cancellationToken = default)
+ 
+        public async Task<(Guid MediaId, bool Duplicate)> Upload(string fileName, Stream content, CancellationToken cancellationToken = default)
         {
+            string contentHash = Convert.ToHexString(await SHA256.HashDataAsync(content, cancellationToken)).ToLowerInvariant();
+            content.Position = 0;
+
+            List<MediaItem> existing = await mediaItemLogic.GetFor(contentHash, m => m.ContentHash, cancellationToken);
+            if (existing.Count > 0)
+                return (existing[0].MediaItemId, true);
+
             Guid mediaId = Guid.NewGuid();
             string storageKey = $"photos/{mediaId}{Path.GetExtension(fileName)}";
 
-            MediaItem media = new() { MediaItemId = mediaId, Uri = storageKey, MediaType = (int)MediaItemType.Photo };
+            MediaItem media = new() { MediaItemId = mediaId, Uri = storageKey, MediaType = (int)MediaItemType.Photo, ContentHash = contentHash };
             await mediaItemLogic.Upsert(media, cancellationToken);
 
             await storageManager.Upsert(storageKey, content, cancellationToken);
-            return mediaId;
+            return (mediaId, false);
         }
 
         public async Task<(Stream Stream, string ContentType)> GetImage(Guid mediaId, CancellationToken cancellationToken = default)
