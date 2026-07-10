@@ -34,6 +34,24 @@ builder.Services.AddHostedService(sp => new UploadEventConsumer(
 
 var app = builder.Build();
 
+app.Use(async (context, next) =>
+{
+    try
+    {
+        await next(context);
+    }
+    catch (KeyNotFoundException ex)
+    {
+        context.Response.StatusCode = StatusCodes.Status404NotFound;
+        await context.Response.WriteAsync(ex.Message);
+    }
+    catch (ArgumentException ex)
+    {
+        context.Response.StatusCode = StatusCodes.Status400BadRequest;
+        await context.Response.WriteAsync(ex.Message);
+    }
+});
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
