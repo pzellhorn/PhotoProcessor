@@ -17,9 +17,10 @@ namespace PhotoProcessor.Logic.ServiceLogic
         Task<(Stream Stream, string ContentType)> GetImage(Guid mediaId, CancellationToken cancellationToken = default);
         Task<Stream> GetThumbnail(Guid mediaId, int width, CancellationToken cancellationToken = default);
         Task<Stream> GetFaceThumbnail(Guid fingerprintId, int width, CancellationToken cancellationToken = default);
+        Task Delete(Guid mediaId, CancellationToken cancellationToken = default);
     }
 
-    public class PhotoLogic(ISignedUrlProvider signedUrlProvider, IStorageManager storageManager, IQueuePublisher queuePublisher, JobLogic jobLogic, MediaItemLogic mediaItemLogic, FingerprintLogic fingerprintLogic) : IPhotoLogic
+    public class PhotoLogic(ISignedUrlProvider signedUrlProvider, IStorageManager storageManager, IQueuePublisher queuePublisher, JobLogic jobLogic, MediaItemLogic mediaItemLogic, FingerprintLogic fingerprintLogic, TagLogic tagLogic) : IPhotoLogic
     {
         private static readonly TimeSpan UrlLifetime = TimeSpan.FromMinutes(30);
 
@@ -146,6 +147,32 @@ namespace PhotoProcessor.Logic.ServiceLogic
             data.SaveTo(output);
             output.Position = 0;
             return output;
+        }
+         
+        public async Task Delete(Guid mediaId, CancellationToken cancellationToken = default)
+        {
+            MediaItem media = await mediaItemLogic.Get(mediaId, cancellationToken) ?? throw new KeyNotFoundException($"Media {mediaId} not found.");
+
+            await storageManager.Delete(media.Uri, cancellationToken);
+
+            List<Fingerprint> fingerprints = await fingerprintLogic.GetFor(mediaId, f => f.MediaId, cancellationToken);
+            HashSet<Guid> affectedTagIds = new();
+            foreach (Fingerprint fingerprint in fingerprints)
+            {
+                if (fingerprint.TagId is Guid tagId)
+                    affectedTagIds.Add(tagId);
+                await fingerprintLogic.Delete(fingerprint.FingerprintId, cancellationToken);
+            }
+             
+            //Check tags to see if now no more mapped fingerprints.
+            foreach (Guid tagId in affectedTagIds)
+            {
+                List<Fingerprint> remaining = await fingerprintLogic.GetFor(tagId, f => f.TagId, cancellationToken);
+                if (remaining.Count == 0)
+                    await tagLogic.Delete(tagId, cancellationToken);
+            }
+
+            await mediaItemLogic.Delete(mediaId, cancellationToken);
         }
 
         private static string ContentTypeFor(string key) => Path.GetExtension(key).ToLowerInvariant() switch

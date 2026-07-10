@@ -47,5 +47,12 @@ namespace PhotoProcessor.API.Controllers
             Stream stream = await photoLogic.GetFaceThumbnail(fingerprintId, width <= 0 ? 160 : width, cancellationToken);
             return File(stream, "image/jpeg");
         }
+
+        [HttpDelete(nameof(Delete))]
+        public async Task<ActionResult> Delete([FromQuery] Guid mediaId, CancellationToken cancellationToken)
+        {
+            await photoLogic.Delete(mediaId, cancellationToken);
+            return NoContent();
+        }
     }
 }
