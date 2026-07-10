@@ -40,5 +40,12 @@ namespace PhotoProcessor.API.Controllers
             Stream stream = await photoLogic.GetThumbnail(mediaId, width <= 0 ? 320 : width, cancellationToken);
             return File(stream, "image/jpeg");
         }
+
+        [HttpGet(nameof(GetFaceThumbnail))]
+        public async Task<ActionResult> GetFaceThumbnail([FromQuery] Guid fingerprintId, [FromQuery] int width, CancellationToken cancellationToken)
+        {
+            Stream stream = await photoLogic.GetFaceThumbnail(fingerprintId, width <= 0 ? 160 : width, cancellationToken);
+            return File(stream, "image/jpeg");
+        }
     }
 }

@@ -16,11 +16,14 @@ namespace PhotoProcessor.Logic.ServiceLogic
         Task<Guid> Upload(string fileName, Stream content, CancellationToken cancellationToken = default);
         Task<(Stream Stream, string ContentType)> GetImage(Guid mediaId, CancellationToken cancellationToken = default);
         Task<Stream> GetThumbnail(Guid mediaId, int width, CancellationToken cancellationToken = default);
+        Task<Stream> GetFaceThumbnail(Guid fingerprintId, int width, CancellationToken cancellationToken = default);
     }
 
-    public class PhotoLogic(ISignedUrlProvider signedUrlProvider, IStorageManager storageManager, IQueuePublisher queuePublisher, JobLogic jobLogic, MediaItemLogic mediaItemLogic) : IPhotoLogic
+    public class PhotoLogic(ISignedUrlProvider signedUrlProvider, IStorageManager storageManager, IQueuePublisher queuePublisher, JobLogic jobLogic, MediaItemLogic mediaItemLogic, FingerprintLogic fingerprintLogic) : IPhotoLogic
     {
         private static readonly TimeSpan UrlLifetime = TimeSpan.FromMinutes(30);
+
+        private const double FaceCropMargin = 0.25;
 
         /// <summary>
         /// Fires after a storage upload is completed via S3 bucket emitted event
@@ -96,6 +99,48 @@ namespace PhotoProcessor.Logic.ServiceLogic
                 ?? throw new InvalidOperationException("Thumbnail resize failed.");
             using SKImage image = SKImage.FromBitmap(resized);
             using SKData data = image.Encode(SKEncodedImageFormat.Jpeg, 80);
+
+            MemoryStream output = new();
+            data.SaveTo(output);
+            output.Position = 0;
+            return output;
+        }
+
+        public async Task<Stream> GetFaceThumbnail(Guid fingerprintId, int width, CancellationToken cancellationToken = default)
+        {
+            Fingerprint fingerprint = await fingerprintLogic.Get(fingerprintId, cancellationToken) ?? throw new KeyNotFoundException($"Fingerprint {fingerprintId} not found.");
+
+            if (fingerprint.BoundingX is not double boxX || fingerprint.BoundingY is not double boxY ||
+                fingerprint.BoundingWidth is not double boxWidth || fingerprint.BoundingHeight is not double boxHeight)
+                throw new InvalidOperationException($"Fingerprint {fingerprintId} has no bounding box.");
+
+            MediaItem media = await mediaItemLogic.Get(fingerprint.MediaId, cancellationToken) ?? throw new KeyNotFoundException($"Media {fingerprint.MediaId} not found.");
+
+            await using Stream original = await storageManager.Get(media.Uri, cancellationToken);
+            using SKBitmap source = SKBitmap.Decode(original) ?? throw new InvalidOperationException($"Could not decode image for media {fingerprint.MediaId}.");
+
+            double marginX = boxWidth * FaceCropMargin;
+            double marginY = boxHeight * FaceCropMargin;
+            float left = (float)Math.Max(0, boxX - marginX);
+            float top = (float)Math.Max(0, boxY - marginY);
+            float right = (float)Math.Min(source.Width, boxX + boxWidth + marginX);
+            float bottom = (float)Math.Min(source.Height, boxY + boxHeight + marginY);
+
+            if (right <= left || bottom <= top)
+                throw new InvalidOperationException($"Fingerprint {fingerprintId} bounding box lies outside the image.");
+
+            SKRect cropRect = new(left, top, right, bottom);
+
+            int targetWidth = Math.Max(1, Math.Min(width, (int)cropRect.Width));
+            int targetHeight = Math.Max(1, (int)Math.Round(cropRect.Height * (targetWidth / (double)cropRect.Width)));
+
+            SKImageInfo info = new(targetWidth, targetHeight);
+            using SKSurface surface = SKSurface.Create(info);
+            using SKImage sourceImage = SKImage.FromBitmap(source);
+            surface.Canvas.DrawImage(sourceImage, cropRect, new SKRect(0, 0, targetWidth, targetHeight), new SKSamplingOptions(SKCubicResampler.Mitchell));
+
+            using SKImage face = surface.Snapshot();
+            using SKData data = face.Encode(SKEncodedImageFormat.Jpeg, 80);
 
             MemoryStream output = new();
             data.SaveTo(output);
