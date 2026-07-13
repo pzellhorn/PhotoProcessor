@@ -27,5 +27,18 @@ namespace PhotoProcessor.API.Controllers
             await videoLogic.Submit(request, cancellationToken);
             return Ok();
         }
+
+        [HttpGet(nameof(GetRenditions))]
+        public async Task<ActionResult<List<VideoRenditionSummary>>> GetRenditions([FromQuery] Guid mediaId, CancellationToken cancellationToken)
+        {
+            return Ok(await videoLogic.GetRenditions(mediaId, cancellationToken));
+        }
+
+        [HttpGet("Stream/{mediaId:guid}/{**assetPath}")]
+        public async Task<ActionResult> Stream(Guid mediaId, string assetPath, CancellationToken cancellationToken)
+        {
+            (Stream stream, string contentType) = await videoLogic.GetDerivedAsset(mediaId, assetPath, cancellationToken);
+            return File(stream, contentType);
+        }
     }
 }

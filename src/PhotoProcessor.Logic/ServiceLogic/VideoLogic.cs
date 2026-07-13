@@ -10,6 +10,8 @@ namespace PhotoProcessor.Logic.ServiceLogic
     {
         Task Submit(SubmitVideoRequest request, CancellationToken cancellationToken = default);
         Task DeleteRenditions(Guid mediaId, CancellationToken cancellationToken = default);
+        Task<(Stream Stream, string ContentType)> GetDerivedAsset(Guid mediaId, string assetPath, CancellationToken cancellationToken = default);
+        Task<List<VideoRenditionSummary>> GetRenditions(Guid mediaId, CancellationToken cancellationToken = default);
     }
 
     public class VideoLogic(JobLogic jobLogic, MediaItemLogic mediaItemLogic, VideoRenditionLogic videoRenditionLogic, IStorageManager storageManager) : IVideoLogic
@@ -55,5 +57,45 @@ namespace PhotoProcessor.Logic.ServiceLogic
             foreach (VideoRendition rendition in renditions)
                 await videoRenditionLogic.Delete(rendition.RenditionId, cancellationToken);
         }
+
+        public async Task<(Stream Stream, string ContentType)> GetDerivedAsset(Guid mediaId, string assetPath, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(assetPath) || assetPath.Contains(".."))   // a path containing ".." denotes a relative pathing
+                throw new ArgumentException("Invalid asset path.", nameof(assetPath));
+
+            string key = $"videos/derived/{mediaId}/{assetPath}";
+            Stream stream = await storageManager.Get(key, cancellationToken);
+            return (stream, ContentTypeFor(assetPath));
+        }
+
+        public async Task<List<VideoRenditionSummary>> GetRenditions(Guid mediaId, CancellationToken cancellationToken = default)
+        {
+            List<VideoRendition> renditions = await videoRenditionLogic.GetFor(mediaId, r => r.MediaId, cancellationToken);
+            string prefix = $"videos/derived/{mediaId}/";
+
+            List<VideoRenditionSummary> summaries = new();
+            foreach (VideoRendition rendition in renditions)
+            {
+                summaries.Add(new VideoRenditionSummary
+                {
+                    Format = rendition.Format,
+                    AssetPath = rendition.EntryPath.StartsWith(prefix) ? rendition.EntryPath[prefix.Length..] : rendition.EntryPath,
+                    Width = rendition.Width,
+                    Height = rendition.Height,
+                    Bitrate = rendition.Bitrate,
+                });
+            }
+            return summaries;
+        }
+
+        private static string ContentTypeFor(string path) => Path.GetExtension(path).ToLowerInvariant() switch
+        {
+            ".m3u8" => "application/vnd.apple.mpegurl",
+            ".ts" => "video/mp2t",
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".mp4" => "video/mp4",
+            ".vtt" => "text/vtt",
+            _ => "application/octet-stream",
+        };
     }
 }
