@@ -44,4 +44,4 @@ class FaceRecognitionWorker(BaseConsumer):
             results.mark_failed(job_id, str(e))    
 
 if __name__ == "__main__":
-    FaceRecognitionWorker(queue="jobs").run()
+    FaceRecognitionWorker(queue="jobs.face-recognition").run()

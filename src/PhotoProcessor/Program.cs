@@ -24,13 +24,16 @@ builder.Services.AddStateServices(builder.Configuration);
 builder.Services.AddLogicServices();
 builder.Services.AddDistributedQueueRabbitMq(builder.Configuration);
 
-UploadEventOptions photoUploadEvents = builder.Configuration.GetSection("PhotoUploadEvents").Get<UploadEventOptions>() ?? throw new Exception("Can't find PhotoUploadEvents in config");
+List<UploadEventOptions> uploadEvents = builder.Configuration.GetSection("UploadEvents").Get<List<UploadEventOptions>>() ?? throw new Exception("Can't find UploadEvents in config");
 
-builder.Services.AddHostedService(sp => new UploadEventConsumer(
-    sp.GetRequiredService<IQueueConsumer>(),
-    sp.GetRequiredService<IServiceScopeFactory>(),
-    photoUploadEvents,
-    sp.GetRequiredService<ILogger<UploadEventConsumer>>()));
+foreach (UploadEventOptions uploadEvent in uploadEvents)
+{
+    builder.Services.AddSingleton<IHostedService>(sp => new UploadEventConsumer(
+        sp.GetRequiredService<IQueueConsumer>(),
+        sp.GetRequiredService<IServiceScopeFactory>(),
+        uploadEvent,
+        sp.GetRequiredService<ILogger<UploadEventConsumer>>()));
+}
 
 var app = builder.Build();
 

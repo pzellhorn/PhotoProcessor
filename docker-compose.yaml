@@ -42,6 +42,13 @@ services:
       MINIO_NOTIFY_AMQP_ROUTING_KEY_PRIMARY: "photo-uploaded"
       MINIO_NOTIFY_AMQP_DURABLE_PRIMARY: "on"
       MINIO_NOTIFY_AMQP_DELIVERY_MODE_PRIMARY: "2"
+      MINIO_NOTIFY_AMQP_ENABLE_SECONDARY: "on"
+      MINIO_NOTIFY_AMQP_URL_SECONDARY: "amqp://app:app@rabbitmq:5672"
+      MINIO_NOTIFY_AMQP_EXCHANGE_SECONDARY: "minio-events"
+      MINIO_NOTIFY_AMQP_EXCHANGE_TYPE_SECONDARY: "direct"
+      MINIO_NOTIFY_AMQP_ROUTING_KEY_SECONDARY: "video-uploaded"
+      MINIO_NOTIFY_AMQP_DURABLE_SECONDARY: "on"
+      MINIO_NOTIFY_AMQP_DELIVERY_MODE_SECONDARY: "2"
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -60,6 +67,7 @@ services:
       until mc alias set local http://minio:9000 minioadmin minioadmin; do echo 'waiting for minio...'; sleep 1; done;
       mc mb --ignore-existing local/media;
       mc event add --ignore-existing local/media arn:minio:sqs::PRIMARY:amqp --event put --prefix photos/;
+      mc event add --ignore-existing local/media arn:minio:sqs::SECONDARY:amqp --event put --prefix videos/raw/;
       "
 
 volumes:

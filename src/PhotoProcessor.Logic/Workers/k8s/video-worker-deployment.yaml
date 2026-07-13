@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: video-transcode-worker
+  labels:
+    app: video-transcode-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: video-transcode-worker
+  template:
+    metadata:
+      labels:
+        app: video-transcode-worker
+    spec:
+      terminationGracePeriodSeconds: 120
+      containers:
+        - name: worker
+          image: photoprocessor/video-transcode-worker:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: video-worker-config
+            - secretRef:
+                name: video-worker-secret
+          resources:
+            requests:
+              cpu: "1"
+              memory: "512Mi"
+            limits:
+              cpu: "4"
+              memory: "2Gi"

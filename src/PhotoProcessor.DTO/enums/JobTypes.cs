@@ -9,5 +9,6 @@ namespace PhotoProcessor.DTO.enums
     {
         None = 0,
         FaceRecognition = 1,
+        VideoTranscode = 2,
     }
 }

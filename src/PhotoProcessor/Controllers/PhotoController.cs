@@ -1,13 +1,14 @@
 using Microsoft.AspNetCore.Mvc;
+using PhotoProcessor.DTO.enums;
 using PhotoProcessor.Logic.ServiceLogic;
 
 namespace PhotoProcessor.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class PhotoController(IPhotoLogic photoLogic) : Controller
+    public class PhotoController(IPhotoLogic photoLogic, IMediaIngestLogic mediaIngestLogic) : Controller
     {
-        
+
         [HttpGet(nameof(GetDownloadUrl))]
         public async Task<ActionResult> GetDownloadUrl(Guid mediaId, CancellationToken cancellationToken)
         {
@@ -23,7 +24,7 @@ namespace PhotoProcessor.API.Controllers
                 return BadRequest("No file provided.");
 
             await using Stream content = file.OpenReadStream();
-            (Guid mediaId, bool duplicate) = await photoLogic.Upload(file.FileName, content, cancellationToken);
+            (Guid mediaId, bool duplicate) = await mediaIngestLogic.Store(file.FileName, content, MediaItemType.Photo, cancellationToken);
             return Ok(new { mediaId, duplicate });
         }
 

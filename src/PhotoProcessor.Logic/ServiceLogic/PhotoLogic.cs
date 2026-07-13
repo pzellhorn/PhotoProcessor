@@ -1,4 +1,3 @@
-using System.Security.Cryptography;
 using PhotoProcessor.DTO.enums;
 using PhotoProcessor.DTO.ServiceDTOs;
 using PhotoProcessor.Logic.EntityLogic;
@@ -14,14 +13,13 @@ namespace PhotoProcessor.Logic.ServiceLogic
         Task<Guid> EnqueueProcessing(Guid mediaId, JobTypes jobType, CancellationToken cancellationToken = default);
         Task<Uri> GetDownloadUrl(Guid mediaId, CancellationToken cancellationToken = default);
 
-        Task<(Guid MediaId, bool Duplicate)> Upload(string fileName, Stream content, CancellationToken cancellationToken = default);
         Task<(Stream Stream, string ContentType)> GetImage(Guid mediaId, CancellationToken cancellationToken = default);
         Task<Stream> GetThumbnail(Guid mediaId, int width, CancellationToken cancellationToken = default);
         Task<Stream> GetFaceThumbnail(Guid fingerprintId, int width, CancellationToken cancellationToken = default);
         Task Delete(Guid mediaId, CancellationToken cancellationToken = default);
     }
 
-    public class PhotoLogic(ISignedUrlProvider signedUrlProvider, IStorageManager storageManager, IQueuePublisher queuePublisher, JobLogic jobLogic, MediaItemLogic mediaItemLogic, FingerprintLogic fingerprintLogic, TagLogic tagLogic) : IPhotoLogic
+    public class PhotoLogic(ISignedUrlProvider signedUrlProvider, IStorageManager storageManager, IQueuePublisher queuePublisher, JobLogic jobLogic, MediaItemLogic mediaItemLogic, FingerprintLogic fingerprintLogic, TagLogic tagLogic, IVideoLogic videoLogic) : IPhotoLogic
     {
         private static readonly TimeSpan UrlLifetime = TimeSpan.FromMinutes(30);
 
@@ -54,7 +52,7 @@ namespace PhotoProcessor.Logic.ServiceLogic
                 MediaId: mediaId,
                 JobType: jobType,
                 MediaUri: media.Uri);
-            await queuePublisher.Publish("jobs", message, cancellationToken);
+            await queuePublisher.Publish(JobQueues.GetQueueForJob(jobType), message, cancellationToken);
 
             return jobId;
         } 
@@ -66,40 +64,23 @@ namespace PhotoProcessor.Logic.ServiceLogic
             return await signedUrlProvider.GetDownloadUrl(media.Uri, UrlLifetime, cancellationToken);
         }
  
-        public async Task<(Guid MediaId, bool Duplicate)> Upload(string fileName, Stream content, CancellationToken cancellationToken = default)
-        {
-            string contentHash = Convert.ToHexString(await SHA256.HashDataAsync(content, cancellationToken)).ToLowerInvariant();
-            content.Position = 0;
-
-            List<MediaItem> existing = await mediaItemLogic.GetFor(contentHash, m => m.ContentHash, cancellationToken);
-            if (existing.Count > 0)
-                return (existing[0].MediaItemId, true);
-
-            Guid mediaId = Guid.NewGuid();
-            string storageKey = $"photos/{mediaId}{Path.GetExtension(fileName)}";
-
-            MediaItem media = new() { MediaItemId = mediaId, Uri = storageKey, MediaType = (int)MediaItemType.Photo, ContentHash = contentHash };
-            await mediaItemLogic.Upsert(media, cancellationToken);
-
-            await storageManager.Upsert(storageKey, content, cancellationToken);
-            return (mediaId, false);
-        }
-
         public async Task<(Stream Stream, string ContentType)> GetImage(Guid mediaId, CancellationToken cancellationToken = default)
         {
             MediaItem media = await mediaItemLogic.Get(mediaId, cancellationToken) ?? throw new KeyNotFoundException($"Media {mediaId} not found.");
 
             Stream stream = await storageManager.Get(media.Uri, cancellationToken);
-            return (stream, ContentTypeFor(media.Uri));
+            return (stream, GetContentType(media.Uri));
         }
 
         public async Task<Stream> GetThumbnail(Guid mediaId, int width, CancellationToken cancellationToken = default)
         {
             MediaItem media = await mediaItemLogic.Get(mediaId, cancellationToken) ?? throw new KeyNotFoundException($"Media {mediaId} not found.");
 
-            await using Stream original = await storageManager.Get(media.Uri, cancellationToken);
+            string sourceKey = string.IsNullOrEmpty(media.ThumbnailUri) ? media.Uri : media.ThumbnailUri;
+
+            await using Stream original = await storageManager.Get(sourceKey, cancellationToken);
             SKBitmap source = SKBitmap.Decode(original) ?? throw new InvalidOperationException($"Could not decode image for media {mediaId}.");
-             
+
             int targetWidth = Math.Min(width, source.Width);
             int targetHeight = (int)Math.Round(source.Height * (targetWidth / (double)source.Width));
 
@@ -163,6 +144,9 @@ namespace PhotoProcessor.Logic.ServiceLogic
 
             await storageManager.Delete(media.Uri, cancellationToken);
 
+            if (media.MediaType == (int)MediaItemType.Video)
+                await videoLogic.DeleteRenditions(mediaId, cancellationToken);
+
             List<Fingerprint> fingerprints = await fingerprintLogic.GetFor(mediaId, f => f.MediaId, cancellationToken);
             HashSet<Guid> affectedTagIds = new();
             foreach (Fingerprint fingerprint in fingerprints)
@@ -183,7 +167,7 @@ namespace PhotoProcessor.Logic.ServiceLogic
             await mediaItemLogic.Delete(mediaId, cancellationToken);
         }
 
-        private static string ContentTypeFor(string key) => Path.GetExtension(key).ToLowerInvariant() switch
+        private static string GetContentType(string key) => Path.GetExtension(key).ToLowerInvariant() switch
         {
             ".jpg" or ".jpeg" => "image/jpeg",
             ".png" => "image/png",

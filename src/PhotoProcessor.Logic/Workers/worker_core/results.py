@@ -29,3 +29,12 @@ def mark_failed(job_id: str, error: str) -> None:
 
 def submit_fingerprints(job_id: str, faces: list) -> None:
     _post("/api/Fingerprint/Submit", {"jobId": job_id, "faces": faces})
+
+
+def submit_video(job_id: str, duration_ms: float, poster_path: str, renditions: list) -> None:
+    _post("/api/Video/Submit", {
+        "jobId": job_id,
+        "durationMs": duration_ms,
+        "posterPath": poster_path,
+        "renditions": renditions,
+    })

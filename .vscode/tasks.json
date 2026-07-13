@@ -1,0 +1,25 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "webapp: build",
+            "type": "shell",
+            "command": "npm run build",
+            "options": {
+                "cwd": "G:/Dev/PhotoProcessorWebapp"
+            },
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "webapp: dev",
+            "type": "shell",
+            "command": "npm run dev",
+            "options": {
+                "cwd": "G:/Dev/PhotoProcessorWebapp"
+            },
+            "isBackground": true,
+            "problemMatcher": []
+        }
+    ]
+}
