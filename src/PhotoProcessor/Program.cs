@@ -48,6 +48,11 @@ app.Use(async (context, next) =>
         context.Response.StatusCode = StatusCodes.Status404NotFound;
         await context.Response.WriteAsync(ex.Message);
     }
+    catch (FileNotFoundException ex)
+    {
+        context.Response.StatusCode = StatusCodes.Status404NotFound;
+        await context.Response.WriteAsync(ex.Message);
+    }
     catch (ArgumentException ex)
     {
         context.Response.StatusCode = StatusCodes.Status400BadRequest;
