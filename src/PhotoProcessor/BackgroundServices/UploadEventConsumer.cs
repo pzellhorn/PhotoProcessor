@@ -48,9 +48,9 @@ namespace PhotoProcessor.API.BackgroundServices
                 try
                 {
                     await using AsyncServiceScope scope = scopeFactory.CreateAsyncScope();
-                    IPhotoLogic photoLogic = scope.ServiceProvider.GetRequiredService<IPhotoLogic>();
+                    IMediaLogic mediaLogic = scope.ServiceProvider.GetRequiredService<IMediaLogic>();
 
-                    Guid jobId = await photoLogic.EnqueueProcessing(mediaId, _options.JobType, cancellationToken);
+                    Guid jobId = await mediaLogic.EnqueueProcessing(mediaId, _options.JobType, cancellationToken);
                     logger.LogInformation($"Enqueued {_options.JobType} job {jobId} for media {mediaId} from upload event");
                 }
                 catch (KeyNotFoundException ex)

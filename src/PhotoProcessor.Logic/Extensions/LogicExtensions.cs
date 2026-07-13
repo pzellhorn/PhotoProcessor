@@ -23,7 +23,7 @@ namespace PhotoProcessor.Logic.Extensions
             services.AddScoped<TagTypeLogic>();
             services.AddScoped<VideoRenditionLogic>();
 
-            services.AddScoped<IPhotoLogic, PhotoLogic>();
+            services.AddScoped<IMediaLogic, MediaLogic>();
             services.AddScoped<IMediaIngestLogic, MediaIngestLogic>();
             services.AddScoped<IVideoLogic, VideoLogic>();
             services.AddScoped<IFingerprintSubmissionLogic, FingerprintSubmissionLogic>();

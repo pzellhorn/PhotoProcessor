@@ -8,7 +8,7 @@ using SkiaSharp;
 
 namespace PhotoProcessor.Logic.ServiceLogic
 {
-    public interface IPhotoLogic
+    public interface IMediaLogic
     {
         Task<Guid> EnqueueProcessing(Guid mediaId, JobTypes jobType, CancellationToken cancellationToken = default);
         Task<Uri> GetDownloadUrl(Guid mediaId, CancellationToken cancellationToken = default);
@@ -19,7 +19,7 @@ namespace PhotoProcessor.Logic.ServiceLogic
         Task Delete(Guid mediaId, CancellationToken cancellationToken = default);
     }
 
-    public class PhotoLogic(ISignedUrlProvider signedUrlProvider, IStorageManager storageManager, IQueuePublisher queuePublisher, JobLogic jobLogic, MediaItemLogic mediaItemLogic, FingerprintLogic fingerprintLogic, TagLogic tagLogic, IVideoLogic videoLogic) : IPhotoLogic
+    public class MediaLogic(ISignedUrlProvider signedUrlProvider, IStorageManager storageManager, IQueuePublisher queuePublisher, JobLogic jobLogic, MediaItemLogic mediaItemLogic, FingerprintLogic fingerprintLogic, TagLogic tagLogic, IVideoLogic videoLogic) : IMediaLogic
     {
         private static readonly TimeSpan UrlLifetime = TimeSpan.FromMinutes(30);
 

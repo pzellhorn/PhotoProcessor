@@ -6,13 +6,13 @@ namespace PhotoProcessor.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class PhotoController(IPhotoLogic photoLogic, IMediaIngestLogic mediaIngestLogic) : Controller
+    public class PhotoController(IMediaLogic mediaLogic, IMediaIngestLogic mediaIngestLogic) : Controller
     {
 
         [HttpGet(nameof(GetDownloadUrl))]
         public async Task<ActionResult> GetDownloadUrl(Guid mediaId, CancellationToken cancellationToken)
         {
-            Uri url = await photoLogic.GetDownloadUrl(mediaId, cancellationToken);
+            Uri url = await mediaLogic.GetDownloadUrl(mediaId, cancellationToken);
             return Ok(new { url = url.ToString() });
         }
 
@@ -31,28 +31,28 @@ namespace PhotoProcessor.API.Controllers
         [HttpGet(nameof(Download))]
         public async Task<ActionResult> Download([FromQuery] Guid mediaId, CancellationToken cancellationToken)
         {
-            (Stream stream, string contentType) = await photoLogic.GetImage(mediaId, cancellationToken);
+            (Stream stream, string contentType) = await mediaLogic.GetImage(mediaId, cancellationToken);
             return File(stream, contentType);
         }
 
         [HttpGet(nameof(Thumbnail))]
         public async Task<ActionResult> Thumbnail([FromQuery] Guid mediaId, [FromQuery] int width, CancellationToken cancellationToken)
         {
-            Stream stream = await photoLogic.GetThumbnail(mediaId, width <= 0 ? 320 : width, cancellationToken);
+            Stream stream = await mediaLogic.GetThumbnail(mediaId, width <= 0 ? 320 : width, cancellationToken);
             return File(stream, "image/jpeg");
         }
 
         [HttpGet(nameof(GetFaceThumbnail))]
         public async Task<ActionResult> GetFaceThumbnail([FromQuery] Guid fingerprintId, [FromQuery] int width, CancellationToken cancellationToken)
         {
-            Stream stream = await photoLogic.GetFaceThumbnail(fingerprintId, width <= 0 ? 160 : width, cancellationToken);
+            Stream stream = await mediaLogic.GetFaceThumbnail(fingerprintId, width <= 0 ? 160 : width, cancellationToken);
             return File(stream, "image/jpeg");
         }
 
         [HttpDelete(nameof(Delete))]
         public async Task<ActionResult> Delete([FromQuery] Guid mediaId, CancellationToken cancellationToken)
         {
-            await photoLogic.Delete(mediaId, cancellationToken);
+            await mediaLogic.Delete(mediaId, cancellationToken);
             return NoContent();
         }
     }
