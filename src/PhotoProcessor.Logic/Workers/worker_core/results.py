@@ -31,6 +31,10 @@ def submit_fingerprints(job_id: str, faces: list) -> None:
     _post("/api/Fingerprint/Submit", {"jobId": job_id, "faces": faces})
 
 
+def submit_image_embedding(job_id: str, embedding: list) -> None:
+    _post("/api/ImageEmbedding/Submit", {"jobId": job_id, "embedding": embedding})
+
+
 def submit_video(job_id: str, duration_ms: float, poster_path: str, renditions: list) -> None:
     _post("/api/Video/Submit", {
         "jobId": job_id,

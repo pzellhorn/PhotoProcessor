@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: image-embedding-worker
+  labels:
+    app: image-embedding-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: image-embedding-worker
+  template:
+    metadata:
+      labels:
+        app: image-embedding-worker
+    spec:
+      terminationGracePeriodSeconds: 60
+      containers:
+        - name: worker
+          image: photoprocessor/image-embedding-worker:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: embedding-worker-config
+            - secretRef:
+                name: embedding-worker-secret
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "2"
+              memory: "3Gi"

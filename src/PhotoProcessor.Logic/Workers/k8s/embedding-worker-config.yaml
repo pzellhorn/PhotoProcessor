@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: embedding-worker-config
+data:
+  RABBITMQ_HOST: "host.docker.internal"
+  RABBITMQ_PORT: "5672"
+  RABBITMQ_VHOST: "/"
+  API_BASE_URL: "http://host.docker.internal:5030"
