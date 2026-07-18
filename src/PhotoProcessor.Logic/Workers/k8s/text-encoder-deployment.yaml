@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: clip-text-encoder
+  labels:
+    app: clip-text-encoder
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: clip-text-encoder
+  template:
+    metadata:
+      labels:
+        app: clip-text-encoder
+    spec:
+      containers:
+        - name: encoder
+          image: photoprocessor/image-embedding-worker:latest
+          imagePullPolicy: IfNotPresent
+          command: ["uvicorn", "image_embedding.textService:app", "--host", "0.0.0.0", "--port", "8000"]
+          ports:
+            - containerPort: 8000
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "1Gi"
+            limits:
+              cpu: "2"
+              memory: "3Gi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: clip-text-encoder
+spec:
+  type: LoadBalancer
+  selector:
+    app: clip-text-encoder
+  ports:
+    - port: 8001
+      targetPort: 8000

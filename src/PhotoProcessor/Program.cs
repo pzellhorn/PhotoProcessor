@@ -21,7 +21,7 @@ builder.Services.AddCors(options =>
         policy.WithOrigins(corsOrigins).AllowAnyHeader().AllowAnyMethod()));
 
 builder.Services.AddStateServices(builder.Configuration);
-builder.Services.AddLogicServices();
+builder.Services.AddLogicServices(builder.Configuration);
 builder.Services.AddDistributedQueueRabbitMq(builder.Configuration);
 
 List<UploadEventOptions> uploadEvents = builder.Configuration.GetSection("UploadEvents").Get<List<UploadEventOptions>>() ?? throw new Exception("Can't find UploadEvents in config");
