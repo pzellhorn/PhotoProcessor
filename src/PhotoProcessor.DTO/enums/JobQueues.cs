@@ -6,6 +6,7 @@ namespace PhotoProcessor.DTO.enums
         {
             JobTypes.FaceRecognition => "jobs.face-recognition",
             JobTypes.VideoTranscode => "jobs.video-transcode",
+            JobTypes.ImageEmbedding => "jobs.image-embedding",
             _ => throw new ArgumentOutOfRangeException(nameof(jobType), jobType, "No queue mapping for job type."),
         };
     }

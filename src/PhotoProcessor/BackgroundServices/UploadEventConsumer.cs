@@ -1,3 +1,4 @@
+using PhotoProcessor.DTO.enums;
 using PhotoProcessor.DTO.ServiceDTOs;
 using PhotoProcessor.Logic.ServiceLogic;
 using pzellhorn.Core.Messaging;
@@ -50,8 +51,11 @@ namespace PhotoProcessor.API.BackgroundServices
                     await using AsyncServiceScope scope = scopeFactory.CreateAsyncScope();
                     IMediaLogic mediaLogic = scope.ServiceProvider.GetRequiredService<IMediaLogic>();
 
-                    Guid jobId = await mediaLogic.EnqueueProcessing(mediaId, _options.JobType, cancellationToken);
-                    logger.LogInformation($"Enqueued {_options.JobType} job {jobId} for media {mediaId} from upload event");
+                    foreach (JobTypes jobType in _options.JobTypes)
+                    {
+                        Guid jobId = await mediaLogic.EnqueueProcessing(mediaId, jobType, cancellationToken);
+                        logger.LogInformation($"Enqueued {jobType} job {jobId} for media {mediaId} from upload event");
+                    }
                 }
                 catch (KeyNotFoundException ex)
                 {

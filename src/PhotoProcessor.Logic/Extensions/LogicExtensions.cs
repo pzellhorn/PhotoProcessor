@@ -22,6 +22,7 @@ namespace PhotoProcessor.Logic.Extensions
             services.AddScoped<TagItemLogic>();
             services.AddScoped<TagTypeLogic>();
             services.AddScoped<VideoRenditionLogic>();
+            services.AddScoped<ImageEmbeddingLogic>();
 
             services.AddScoped<IMediaLogic, MediaLogic>();
             services.AddScoped<IMediaIngestLogic, MediaIngestLogic>();
@@ -29,6 +30,7 @@ namespace PhotoProcessor.Logic.Extensions
             services.AddScoped<IFingerprintSubmissionLogic, FingerprintSubmissionLogic>();
             services.AddScoped<IIdentityLogic, IdentityLogic>();
             services.AddScoped<IFingerprintSearchLogic, FingerprintSearchLogic>();
+            services.AddScoped<IImageEmbeddingSubmissionLogic, ImageEmbeddingSubmissionLogic>();
 
             services.AddScoped<IDTOMapper<MediaItem, MediaItemRequest, MediaItemResponse>, MediaItemMapper>();
             services.AddScoped<IDTOMapper<Job, JobRequest, JobResponse>, JobMapper>();

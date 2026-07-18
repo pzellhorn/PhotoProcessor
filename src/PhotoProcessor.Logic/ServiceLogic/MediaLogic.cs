@@ -19,7 +19,7 @@ namespace PhotoProcessor.Logic.ServiceLogic
         Task Delete(Guid mediaId, CancellationToken cancellationToken = default);
     }
 
-    public class MediaLogic(ISignedUrlProvider signedUrlProvider, IStorageManager storageManager, IQueuePublisher queuePublisher, JobLogic jobLogic, MediaItemLogic mediaItemLogic, FingerprintLogic fingerprintLogic, TagLogic tagLogic, IVideoLogic videoLogic) : IMediaLogic
+    public class MediaLogic(ISignedUrlProvider signedUrlProvider, IStorageManager storageManager, IQueuePublisher queuePublisher, JobLogic jobLogic, MediaItemLogic mediaItemLogic, FingerprintLogic fingerprintLogic, ImageEmbeddingLogic imageEmbeddingLogic, TagLogic tagLogic, IVideoLogic videoLogic) : IMediaLogic
     {
         private static readonly TimeSpan UrlLifetime = TimeSpan.FromMinutes(30);
 
@@ -146,6 +146,10 @@ namespace PhotoProcessor.Logic.ServiceLogic
 
             if (media.MediaType == (int)MediaItemType.Video)
                 await videoLogic.DeleteRenditions(mediaId, cancellationToken);
+
+            List<ImageEmbedding> imageEmbeddings = await imageEmbeddingLogic.GetFor(mediaId, e => e.MediaId, cancellationToken);
+            foreach (ImageEmbedding imageEmbedding in imageEmbeddings)
+                await imageEmbeddingLogic.Delete(imageEmbedding.ImageEmbeddingId, cancellationToken);
 
             List<Fingerprint> fingerprints = await fingerprintLogic.GetFor(mediaId, f => f.MediaId, cancellationToken);
             HashSet<Guid> affectedTagIds = new();

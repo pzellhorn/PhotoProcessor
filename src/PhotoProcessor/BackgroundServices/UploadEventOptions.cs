@@ -12,6 +12,6 @@ namespace PhotoProcessor.API.BackgroundServices
          
         public required string KeyPrefix { get; set; }
          
-        public required JobTypes JobType { get; set; }
+        public required List<JobTypes> JobTypes { get; set; }
     }
 }
