@@ -33,6 +33,7 @@ namespace PhotoProcessor.Logic.Extensions
             services.AddScoped<TagTypeLogic>();
             services.AddScoped<VideoRenditionLogic>();
             services.AddScoped<ImageEmbeddingLogic>();
+            services.AddScoped<UploadSessionLogic>();
 
             services.AddScoped<IMediaLogic, MediaLogic>();
             services.AddScoped<IMediaIngestLogic, MediaIngestLogic>();
@@ -43,6 +44,7 @@ namespace PhotoProcessor.Logic.Extensions
             services.AddScoped<IImageEmbeddingSubmissionLogic, ImageEmbeddingSubmissionLogic>();
             services.AddScoped<ISearchLogic, SearchLogic>();
             services.AddScoped<IProgressLogic, ProgressLogic>();
+            services.AddScoped<IResumableUploadLogic, ResumableUploadLogic>();
 
             services.Configure<WorkerScalingOptions>(configuration.GetSection("WorkerScaling"));
             services.AddSingleton<IWorkerScaler, KubernetesWorkerScaler>();
