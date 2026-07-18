@@ -15,6 +15,8 @@ namespace PhotoProcessor.Logic.ServiceLogic
 
     public class SearchLogic(ITextEncoder textEncoder, IImageEmbeddingQueries imageEmbeddingQueries, MediaItemLogic mediaItemLogic) : ISearchLogic
     {
+        private const double MaxDistance = 0.75;
+
         public async Task<List<MediaSearchResult>> SearchByText(string text, int count, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(text))
@@ -30,6 +32,9 @@ namespace PhotoProcessor.Logic.ServiceLogic
             List<MediaSearchResult> results = new();
             foreach (ImageEmbeddingNeighbour neighbour in neighbours)
             {
+                if (neighbour.Distance > MaxDistance)
+                    continue;
+
                 MediaItem? media = await mediaItemLogic.Get(neighbour.ImageEmbedding.MediaId, cancellationToken);
                 if (media is null)
                     continue;
