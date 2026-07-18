@@ -3,12 +3,11 @@ import io
 from PIL import Image
 from sentence_transformers import SentenceTransformer
 
+from image_embedding import MODEL_NAME
 from worker_core import results
 from worker_core.consumer import BaseConsumer
 from worker_core.media import fetch_media_bytes
 from worker_core.results import PermanentError
-
-MODEL_NAME = "clip-ViT-B-32"
 
 
 class ImageEmbeddingWorker(BaseConsumer):
