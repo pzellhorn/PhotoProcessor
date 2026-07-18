@@ -41,6 +41,7 @@ namespace PhotoProcessor.Logic.Extensions
             services.AddScoped<IFingerprintSearchLogic, FingerprintSearchLogic>();
             services.AddScoped<IImageEmbeddingSubmissionLogic, ImageEmbeddingSubmissionLogic>();
             services.AddScoped<ISearchLogic, SearchLogic>();
+            services.AddScoped<IProgressLogic, ProgressLogic>();
 
             services.AddScoped<IDTOMapper<MediaItem, MediaItemRequest, MediaItemResponse>, MediaItemMapper>();
             services.AddScoped<IDTOMapper<Job, JobRequest, JobResponse>, JobMapper>();
