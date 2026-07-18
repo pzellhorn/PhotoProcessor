@@ -5,7 +5,7 @@ namespace PhotoProcessor.DTO.ServiceDTOs
     public class JobTypeProgress
     {
         public JobTypes JobType { get; set; }
-        public MediaItemType AppliesTo { get; set; }
+        public List<MediaItemType> AppliesTo { get; set; } = [];
         public string Queue { get; set; } = string.Empty;
 
         public uint QueueDepth { get; set; }

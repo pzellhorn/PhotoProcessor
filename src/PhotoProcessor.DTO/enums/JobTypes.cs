@@ -11,5 +11,6 @@ namespace PhotoProcessor.DTO.enums
         FaceRecognition = 1,
         VideoTranscode = 2,
         ImageEmbedding = 3,
+        VideoKeyframes = 4,
     }
 }

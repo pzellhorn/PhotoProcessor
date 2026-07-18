@@ -2,6 +2,7 @@ using PhotoProcessor.DTO.enums;
 using PhotoProcessor.DTO.ServiceDTOs;
 using PhotoProcessor.Logic.EntityLogic;
 using PhotoProcessor.State.Data.Entities;
+using PhotoProcessor.State.Data.Queries;
 using pzellhorn.Core.Messaging;
 using pzellhorn.Core.State.Storage;
 using SkiaSharp;
@@ -11,6 +12,7 @@ namespace PhotoProcessor.Logic.ServiceLogic
     public interface IMediaLogic
     {
         Task<Guid> EnqueueProcessing(Guid mediaId, JobTypes jobType, CancellationToken cancellationToken = default);
+        Task<MediaLibraryPage> ListLibrary(int page, int pageSize, CancellationToken cancellationToken = default);
         Task<Uri> GetDownloadUrl(Guid mediaId, CancellationToken cancellationToken = default);
 
         Task<(Stream Stream, string ContentType)> GetImage(Guid mediaId, CancellationToken cancellationToken = default);
@@ -19,7 +21,7 @@ namespace PhotoProcessor.Logic.ServiceLogic
         Task Delete(Guid mediaId, CancellationToken cancellationToken = default);
     }
 
-    public class MediaLogic(ISignedUrlProvider signedUrlProvider, IStorageManager storageManager, IQueuePublisher queuePublisher, JobLogic jobLogic, MediaItemLogic mediaItemLogic, FingerprintLogic fingerprintLogic, ImageEmbeddingLogic imageEmbeddingLogic, TagLogic tagLogic, IVideoLogic videoLogic) : IMediaLogic
+    public class MediaLogic(ISignedUrlProvider signedUrlProvider, IStorageManager storageManager, IQueuePublisher queuePublisher, JobLogic jobLogic, MediaItemLogic mediaItemLogic, FingerprintLogic fingerprintLogic, ImageEmbeddingLogic imageEmbeddingLogic, TagLogic tagLogic, IVideoLogic videoLogic, IMediaQueries mediaQueries) : IMediaLogic
     {
         private static readonly TimeSpan UrlLifetime = TimeSpan.FromMinutes(30);
 
@@ -56,6 +58,23 @@ namespace PhotoProcessor.Logic.ServiceLogic
 
             return jobId;
         } 
+
+        public async Task<MediaLibraryPage> ListLibrary(int page, int pageSize, CancellationToken cancellationToken = default)
+        {
+            (List<MediaItem> items, int totalCount) = await mediaQueries.ListLibrary(page, pageSize, cancellationToken);
+
+            MediaLibraryPage result = new() { TotalCount = totalCount };
+            foreach (MediaItem media in items)
+            {
+                result.Items.Add(new MediaLibraryItem
+                {
+                    MediaItemId = media.MediaItemId,
+                    MediaType = (MediaItemType)media.MediaType,
+                    DurationMs = media.DurationMs,
+                });
+            }
+            return result;
+        }
 
         public async Task<Uri> GetDownloadUrl(Guid mediaId, CancellationToken cancellationToken = default)
         {
@@ -145,7 +164,13 @@ namespace PhotoProcessor.Logic.ServiceLogic
             await storageManager.Delete(media.Uri, cancellationToken);
 
             if (media.MediaType == (int)MediaItemType.Video)
+            {
                 await videoLogic.DeleteRenditions(mediaId, cancellationToken);
+
+                List<MediaItem> frames = await mediaItemLogic.GetFor<Guid?>(mediaId, m => m.ParentMediaId, cancellationToken);
+                foreach (MediaItem frame in frames)
+                    await Delete(frame.MediaItemId, cancellationToken);
+            }
 
             List<ImageEmbedding> imageEmbeddings = await imageEmbeddingLogic.GetFor(mediaId, e => e.MediaId, cancellationToken);
             foreach (ImageEmbedding imageEmbedding in imageEmbeddings)

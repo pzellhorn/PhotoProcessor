@@ -27,16 +27,22 @@ namespace PhotoProcessor.Logic.ServiceLogic
             if (embedding.Length != ImageEmbedding.EmbeddingDimensions)
                 throw new InvalidOperationException($"Text encoder returned {embedding.Length} dimensions but {ImageEmbedding.EmbeddingDimensions} were expected.");
 
-            List<ImageEmbeddingNeighbour> neighbours = await imageEmbeddingQueries.NearestNeighbours(new Vector(embedding), count, cancellationToken);
+            List<ImageEmbeddingNeighbour> neighbours = await imageEmbeddingQueries.NearestNeighbours(new Vector(embedding), MaxDistance, cancellationToken);
 
+            HashSet<Guid> seen = new();
             List<MediaSearchResult> results = new();
+
             foreach (ImageEmbeddingNeighbour neighbour in neighbours)
             {
-                if (neighbour.Distance > MaxDistance)
-                    continue;
+                if (results.Count == count)
+                    break;
 
                 MediaItem? media = await mediaItemLogic.Get(neighbour.ImageEmbedding.MediaId, cancellationToken);
                 if (media is null)
+                    continue;
+
+                Guid groupKey = media.ParentMediaId ?? media.MediaItemId;
+                if (!seen.Add(groupKey))
                     continue;
 
                 results.Add(new MediaSearchResult
@@ -44,6 +50,8 @@ namespace PhotoProcessor.Logic.ServiceLogic
                     MediaId = media.MediaItemId,
                     MediaType = (MediaItemType)media.MediaType,
                     DurationMs = media.DurationMs,
+                    ParentMediaId = media.ParentMediaId,
+                    TimestampMs = media.TimestampMs,
                     Distance = neighbour.Distance,
                 });
             }

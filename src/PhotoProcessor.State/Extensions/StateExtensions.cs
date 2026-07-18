@@ -28,6 +28,7 @@ namespace PhotoProcessor.State.Extensions
             services.AddScoped<Data.Queries.IFingerprintQueries, Data.Queries.FingerprintQueries>();
             services.AddScoped<Data.Queries.IImageEmbeddingQueries, Data.Queries.ImageEmbeddingQueries>();
             services.AddScoped<Data.Queries.IProgressQueries, Data.Queries.ProgressQueries>();
+            services.AddScoped<Data.Queries.IMediaQueries, Data.Queries.MediaQueries>();
 
             services.AddS3Storage(configuration);
 

@@ -8,6 +8,9 @@ namespace PhotoProcessor.DTO.ServiceDTOs
         public MediaItemType MediaType { get; set; }
         public double? DurationMs { get; set; }
 
+        public Guid? ParentMediaId { get; set; }
+        public double? TimestampMs { get; set; }
+
         public double Distance { get; set; }
     }
 }

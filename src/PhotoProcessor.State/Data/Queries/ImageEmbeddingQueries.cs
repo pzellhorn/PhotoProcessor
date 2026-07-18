@@ -12,7 +12,7 @@ namespace PhotoProcessor.State.Data.Queries
     {
         Task<List<ImageEmbeddingNeighbour>> NearestNeighbours(
             Vector vectorQuery,
-            int count,
+            double maxDistance,
             CancellationToken cancellationToken = default);
     }
 
@@ -20,13 +20,13 @@ namespace PhotoProcessor.State.Data.Queries
     {
         public async Task<List<ImageEmbeddingNeighbour>> NearestNeighbours(
             Vector vectorQuery,
-            int count,
+            double maxDistance,
             CancellationToken cancellationToken = default)
         {
             var ranked = await db.Set<ImageEmbedding>()
                 .Select(e => new { ImageEmbedding = e, Distance = e.Embedding.CosineDistance(vectorQuery) })
+                .Where(x => x.Distance <= maxDistance)
                 .OrderBy(x => x.Distance)
-                .Take(count)
                 .ToListAsync(cancellationToken);
 
             List<ImageEmbeddingNeighbour> neighbours = new();

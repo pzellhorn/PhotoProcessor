@@ -12,5 +12,10 @@ namespace PhotoProcessor.DTO.ServiceDTOs
         public double? BoundingY { get; set; }
         public double? BoundingWidth { get; set; }
         public double? BoundingHeight { get; set; }
+
+        public Guid? ParentMediaId { get; set; }
+        public double? TimestampMs { get; set; }
+
+        public int OccurrenceCount { get; set; } = 1;
     }
 }

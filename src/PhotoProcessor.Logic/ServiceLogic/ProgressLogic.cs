@@ -22,18 +22,26 @@ namespace PhotoProcessor.Logic.ServiceLogic
         IOptions<WorkerScalingOptions> scalingOptions) : IProgressLogic
     {
         private readonly WorkerScalingOptions _scalingOptions = scalingOptions.Value;
+
+        private static List<int> ToInts(List<MediaItemType> mediaTypes)
+        {
+            List<int> values = new();
+            foreach (MediaItemType mediaType in mediaTypes)
+                values.Add((int)mediaType);
+            return values;
+        }
         public async Task<List<JobTypeProgress>> GetProgress(CancellationToken cancellationToken = default)
         {
             List<JobTypeProgress> progress = new();
 
             foreach (JobTypes jobType in JobMediaTypes.All())
             {
-                MediaItemType mediaType = JobMediaTypes.GetMediaTypeForJob(jobType);
+                List<MediaItemType> mediaTypes = JobMediaTypes.GetMediaTypesForJob(jobType);
                 string queue = JobQueues.GetQueueForJob(jobType);
 
                 JobTypeCounts counts = await progressQueries.CountsFor(
                     (int)jobType,
-                    (int)mediaType,
+                    ToInts(mediaTypes),
                     (int)JobStatus.Done,
                     (int)JobStatus.Queued,
                     (int)JobStatus.Running,
@@ -56,7 +64,7 @@ namespace PhotoProcessor.Logic.ServiceLogic
                     ReadyReplicas = scale.ReadyReplicas,
                     MaxReplicas = workerScaler.MaxReplicas,
                     JobType = jobType,
-                    AppliesTo = mediaType,
+                    AppliesTo = mediaTypes,
                     Queue = queue,
                     QueueDepth = depth.MessageCount,
                     Consumers = depth.ConsumerCount,
@@ -75,9 +83,9 @@ namespace PhotoProcessor.Logic.ServiceLogic
 
         public async Task<int> Backfill(JobTypes jobType, CancellationToken cancellationToken = default)
         {
-            MediaItemType mediaType = JobMediaTypes.GetMediaTypeForJob(jobType);
+            List<MediaItemType> mediaTypes = JobMediaTypes.GetMediaTypesForJob(jobType);
 
-            List<Guid> mediaIds = await progressQueries.MediaNeverRun((int)jobType, (int)mediaType, cancellationToken);
+            List<Guid> mediaIds = await progressQueries.MediaNeverRun((int)jobType, ToInts(mediaTypes), cancellationToken);
 
             int enqueued = 0;
             foreach (Guid mediaId in mediaIds)

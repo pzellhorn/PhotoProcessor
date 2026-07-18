@@ -45,6 +45,7 @@ namespace PhotoProcessor.Logic.Extensions
             services.AddScoped<ISearchLogic, SearchLogic>();
             services.AddScoped<IProgressLogic, ProgressLogic>();
             services.AddScoped<IResumableUploadLogic, ResumableUploadLogic>();
+            services.AddScoped<IKeyframeLogic, KeyframeLogic>();
 
             services.Configure<WorkerScalingOptions>(configuration.GetSection("WorkerScaling"));
             services.AddSingleton<IWorkerScaler, KubernetesWorkerScaler>();

@@ -7,8 +7,15 @@ namespace PhotoProcessor.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class VideoController(IMediaIngestLogic mediaIngestLogic, IVideoLogic videoLogic) : Controller
+    public class VideoController(IMediaIngestLogic mediaIngestLogic, IVideoLogic videoLogic, IKeyframeLogic keyframeLogic) : Controller
     {
+        [HttpPost(nameof(SubmitKeyframes))]
+        public async Task<ActionResult> SubmitKeyframes([FromBody] SubmitKeyframesRequest request, CancellationToken cancellationToken)
+        {
+            int created = await keyframeLogic.Submit(request, cancellationToken);
+            return Ok(new { created });
+        }
+
         [HttpPost(nameof(Upload))]
         [DisableRequestSizeLimit]
         public async Task<ActionResult> Upload(IFormFile file, CancellationToken cancellationToken)

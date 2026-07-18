@@ -17,6 +17,7 @@ namespace PhotoProcessor.Logic.ServiceLogic
     public class IdentityLogic(
         IFingerprintQueries fingerprintQueries,
         FingerprintLogic fingerprintLogic,
+        MediaItemLogic mediaItemLogic,
         TagLogic tagLogic,
         TagTypeLogic tagTypeLogic) : IIdentityLogic
     { 
@@ -95,10 +96,17 @@ namespace PhotoProcessor.Logic.ServiceLogic
         {
             List<Fingerprint> faces = await fingerprintLogic.GetFor(tagId, f => f.TagId, cancellationToken);
 
+            // A face on screen for a minute yields one fingerprint per frame, so a video contributes a
+            // single entry - its best-scoring frame - rather than flooding the person with duplicates.
+            Dictionary<Guid, FingerprintSummary> byVideo = new();
             List<FingerprintSummary> summaries = new();
 
             foreach (Fingerprint face in faces)
             {
+                MediaItem? media = await mediaItemLogic.Get(face.MediaId, cancellationToken);
+                if (media is null)
+                    continue;
+
                 FingerprintSummary summary = new()
                 {
                     FingerprintId = face.FingerprintId,
@@ -109,8 +117,36 @@ namespace PhotoProcessor.Logic.ServiceLogic
                     BoundingY = face.BoundingY,
                     BoundingWidth = face.BoundingWidth,
                     BoundingHeight = face.BoundingHeight,
-                }; 
-                summaries.Add(summary); 
+                    ParentMediaId = media.ParentMediaId,
+                    TimestampMs = media.TimestampMs,
+                };
+
+                if (media.ParentMediaId is not Guid videoId)
+                {
+                    summaries.Add(summary);
+                    continue;
+                }
+
+                if (!byVideo.TryGetValue(videoId, out FingerprintSummary? best))
+                {
+                    byVideo[videoId] = summary;
+                    summaries.Add(summary);
+                    continue;
+                }
+
+                best.OccurrenceCount++;
+
+                if ((summary.DetectionScore ?? 0) > (best.DetectionScore ?? 0))
+                {
+                    best.FingerprintId = summary.FingerprintId;
+                    best.MediaId = summary.MediaId;
+                    best.DetectionScore = summary.DetectionScore;
+                    best.BoundingX = summary.BoundingX;
+                    best.BoundingY = summary.BoundingY;
+                    best.BoundingWidth = summary.BoundingWidth;
+                    best.BoundingHeight = summary.BoundingHeight;
+                    best.TimestampMs = summary.TimestampMs;
+                }
             }
 
             return summaries;

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using PhotoProcessor.DTO.enums;
+using PhotoProcessor.DTO.ServiceDTOs;
 using PhotoProcessor.Logic.ServiceLogic;
 
 namespace PhotoProcessor.API.Controllers
@@ -8,6 +9,12 @@ namespace PhotoProcessor.API.Controllers
     [Route("api/[controller]")]
     public class PhotoController(IMediaLogic mediaLogic, IMediaIngestLogic mediaIngestLogic) : Controller
     {
+
+        [HttpGet(nameof(ListLibrary))]
+        public async Task<ActionResult<MediaLibraryPage>> ListLibrary([FromQuery] int page, [FromQuery] int pageSize, CancellationToken cancellationToken)
+        {
+            return Ok(await mediaLogic.ListLibrary(page < 1 ? 1 : page, pageSize < 1 ? 50 : pageSize, cancellationToken));
+        }
 
         [HttpGet(nameof(GetDownloadUrl))]
         public async Task<ActionResult> GetDownloadUrl(Guid mediaId, CancellationToken cancellationToken)

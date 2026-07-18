@@ -20,6 +20,11 @@ public partial class MediaItem : IIsDeleted, ICreatedAt, IModifiedAt, IPrimaryKe
 
     public double? DurationMs { get; set; }
 
+    /// <summary> for jobs coming from video uploads, this is the video's media id that this image frame came from</summary>
+    public Guid? ParentMediaId { get; set; } 
+    /// <summary>Offset of this frame within its parent video.</summary>
+    public double? TimestampMs { get; set; }
+
     public bool IsDeleted { get; set; }
 
     public DateTime CreatedAt { get; set; }
@@ -31,6 +36,9 @@ public partial class MediaItem : IIsDeleted, ICreatedAt, IModifiedAt, IPrimaryKe
     public ICollection<Job> Jobs { get; set; } = [];
     public ICollection<TagItem> TagItems { get; set; } = [];
     public ICollection<Fingerprint> Fingerprints { get; set; } = [];
+
+    public MediaItem? Parent { get; set; }
+    public ICollection<MediaItem> Frames { get; set; } = [];
 }
 
 internal sealed class MediaItemConfig : BaseConfig<MediaItem>
@@ -40,10 +48,16 @@ internal sealed class MediaItemConfig : BaseConfig<MediaItem>
         base.Configure(entity);
 
         entity.ToTable("media_items");
-
+         
         entity.HasIndex(e => e.ContentHash)
             .IsUnique()
             .HasFilter("content_hash <> '' AND is_deleted = false");
 
+        entity.HasOne(e => e.Parent)
+            .WithMany(e => e.Frames)
+            .HasForeignKey(e => e.ParentMediaId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        entity.HasIndex(e => e.ParentMediaId);
     }
 }

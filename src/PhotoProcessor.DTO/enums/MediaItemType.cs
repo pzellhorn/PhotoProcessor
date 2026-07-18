@@ -5,5 +5,6 @@ namespace PhotoProcessor.DTO.enums
         None = 0,
         Photo = 1,
         Video = 2,
+        Frame = 3,
     }
 }

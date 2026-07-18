@@ -11,5 +11,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY worker_core ./worker_core
 COPY video_transcode ./video_transcode
+COPY video_keyframes ./video_keyframes
 
 CMD ["python", "-m", "video_transcode.videoTranscodeWorker"]
