@@ -21,5 +21,11 @@ namespace PhotoProcessor.API.Controllers
             int enqueued = await progressLogic.Backfill(jobType, cancellationToken);
             return Ok(new { jobType, enqueued });
         }
+
+        [HttpPost(nameof(Scale))]
+        public async Task<ActionResult<JobTypeProgress>> Scale([FromQuery] JobTypes jobType, [FromQuery] int replicas, CancellationToken cancellationToken)
+        {
+            return Ok(await progressLogic.Scale(jobType, replicas, cancellationToken));
+        }
     }
 }

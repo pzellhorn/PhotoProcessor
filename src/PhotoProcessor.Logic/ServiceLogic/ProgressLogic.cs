@@ -1,5 +1,7 @@
+using Microsoft.Extensions.Options;
 using PhotoProcessor.DTO.enums;
 using PhotoProcessor.DTO.ServiceDTOs;
+using PhotoProcessor.Logic.Scaling;
 using PhotoProcessor.State.Data.Queries;
 using pzellhorn.Core.Messaging;
 
@@ -9,10 +11,17 @@ namespace PhotoProcessor.Logic.ServiceLogic
     {
         Task<List<JobTypeProgress>> GetProgress(CancellationToken cancellationToken = default);
         Task<int> Backfill(JobTypes jobType, CancellationToken cancellationToken = default);
+        Task<JobTypeProgress> Scale(JobTypes jobType, int replicas, CancellationToken cancellationToken = default);
     }
 
-    public class ProgressLogic(IProgressQueries progressQueries, IQueueInspector queueInspector, IMediaLogic mediaLogic) : IProgressLogic
+    public class ProgressLogic(
+        IProgressQueries progressQueries,
+        IQueueInspector queueInspector,
+        IMediaLogic mediaLogic,
+        IWorkerScaler workerScaler,
+        IOptions<WorkerScalingOptions> scalingOptions) : IProgressLogic
     {
+        private readonly WorkerScalingOptions _scalingOptions = scalingOptions.Value;
         public async Task<List<JobTypeProgress>> GetProgress(CancellationToken cancellationToken = default)
         {
             List<JobTypeProgress> progress = new();
@@ -33,8 +42,19 @@ namespace PhotoProcessor.Logic.ServiceLogic
 
                 QueueDepth depth = await queueInspector.GetDepth(queue, cancellationToken);
 
+                string deployment = _scalingOptions.Deployments.GetValueOrDefault(jobType, string.Empty);
+                WorkerScale scale = string.IsNullOrEmpty(deployment)
+                    ? new WorkerScale(string.Empty, 0, 0, false)
+                    : await workerScaler.GetScale(deployment, cancellationToken);
+
                 progress.Add(new JobTypeProgress
                 {
+                    Deployment = deployment,
+                    ScalingEnabled = workerScaler.Enabled && !string.IsNullOrEmpty(deployment),
+                    DeploymentFound = scale.Found,
+                    Replicas = scale.Replicas,
+                    ReadyReplicas = scale.ReadyReplicas,
+                    MaxReplicas = workerScaler.MaxReplicas,
                     JobType = jobType,
                     AppliesTo = mediaType,
                     Queue = queue,
@@ -67,6 +87,17 @@ namespace PhotoProcessor.Logic.ServiceLogic
             }
 
             return enqueued;
+        }
+
+        public async Task<JobTypeProgress> Scale(JobTypes jobType, int replicas, CancellationToken cancellationToken = default)
+        {
+            if (!_scalingOptions.Deployments.TryGetValue(jobType, out string? deployment))
+                throw new KeyNotFoundException($"No worker deployment configured for {jobType}.");
+
+            await workerScaler.SetScale(deployment, replicas, cancellationToken);
+
+            List<JobTypeProgress> progress = await GetProgress(cancellationToken);
+            return progress.Single(p => p.JobType == jobType);
         }
     }
 }

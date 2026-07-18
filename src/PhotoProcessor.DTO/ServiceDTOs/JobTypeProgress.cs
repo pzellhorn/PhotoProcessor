@@ -18,5 +18,12 @@ namespace PhotoProcessor.DTO.ServiceDTOs
         public int Running { get; set; }
         public int Failed { get; set; }
         public int NeverRun { get; set; }
+
+        public string Deployment { get; set; } = string.Empty;
+        public bool ScalingEnabled { get; set; }
+        public bool DeploymentFound { get; set; }
+        public int Replicas { get; set; }
+        public int ReadyReplicas { get; set; }
+        public int MaxReplicas { get; set; }
     }
 }
