@@ -1,6 +1,8 @@
+using System.Diagnostics;
 using PhotoProcessor.DTO.enums;
 using PhotoProcessor.DTO.ServiceDTOs;
 using PhotoProcessor.Logic.Encoding;
+using PhotoProcessor.Logic.Observability;
 using PhotoProcessor.Logic.EntityLogic;
 using PhotoProcessor.State.Data.Entities;
 using PhotoProcessor.State.Data.Queries;
@@ -13,7 +15,7 @@ namespace PhotoProcessor.Logic.ServiceLogic
         Task<List<MediaSearchResult>> SearchByText(string text, int count, CancellationToken cancellationToken = default);
     }
 
-    public class SearchLogic(ITextEncoder textEncoder, IImageEmbeddingQueries imageEmbeddingQueries, MediaItemLogic mediaItemLogic) : ISearchLogic
+    public class SearchLogic(ITextEncoder textEncoder, IImageEmbeddingQueries imageEmbeddingQueries, MediaItemLogic mediaItemLogic, PipelineMetrics metrics) : ISearchLogic
     {
         private const double MaxDistance = 0.75;
 
@@ -22,10 +24,26 @@ namespace PhotoProcessor.Logic.ServiceLogic
             if (string.IsNullOrWhiteSpace(text))
                 throw new ArgumentException("Search text must not be empty.", nameof(text));
 
-            float[] embedding = await textEncoder.EncodeText(text, cancellationToken);
+            long startedAt = Stopwatch.GetTimestamp();
+
+            float[] embedding;
+            try
+            {
+                long encodeStartedAt = Stopwatch.GetTimestamp();
+                embedding = await textEncoder.EncodeText(text, cancellationToken);
+                metrics.TextEncoded(Stopwatch.GetElapsedTime(encodeStartedAt));
+            }
+            catch (Exception)
+            {
+                metrics.SearchFailed("text_encoder");
+                throw;
+            }
 
             if (embedding.Length != ImageEmbedding.EmbeddingDimensions)
+            {
+                metrics.SearchFailed("dimension_mismatch");
                 throw new InvalidOperationException($"Text encoder returned {embedding.Length} dimensions but {ImageEmbedding.EmbeddingDimensions} were expected.");
+            }
 
             List<ImageEmbeddingNeighbour> neighbours = await imageEmbeddingQueries.NearestNeighbours(new Vector(embedding), MaxDistance, cancellationToken);
 
@@ -56,6 +74,7 @@ namespace PhotoProcessor.Logic.ServiceLogic
                 });
             }
 
+            metrics.SearchCompleted(Stopwatch.GetElapsedTime(startedAt));
             return results;
         }
     }

@@ -45,8 +45,7 @@ namespace PhotoProcessor.Logic.ServiceLogic
                 await videoRenditionLogic.Upsert(rendition, cancellationToken);
             }
 
-            job.Status = (int)JobStatus.Done;
-            await jobLogic.Upsert(job, cancellationToken);
+            await jobLogic.MarkDone(job, cancellationToken);
         }
 
         public async Task DeleteRenditions(Guid mediaId, CancellationToken cancellationToken = default)

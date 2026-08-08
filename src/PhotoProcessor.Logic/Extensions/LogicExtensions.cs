@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PhotoProcessor.Logic.Encoding;
+using PhotoProcessor.Logic.Observability;
 using PhotoProcessor.Logic.Scaling;
 using PhotoProcessor.DTO.DTOAdapters.Interfaces;
 using PhotoProcessor.DTO.RequestDTOs.EntityRequests;
@@ -24,6 +25,11 @@ namespace PhotoProcessor.Logic.Extensions
                 client.BaseAddress = new Uri(textEncoderUrl);
                 client.Timeout = TimeSpan.FromSeconds(30);
             });
+
+            services.AddMetrics();
+            services.AddSingleton<PipelineMetrics>();
+            services.AddSingleton<PipelineState>();
+            services.AddSingleton<PipelineStateMetrics>();
 
             services.AddScoped<MediaItemLogic>();
             services.AddScoped<JobLogic>();

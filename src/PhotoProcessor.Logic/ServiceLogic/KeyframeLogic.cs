@@ -45,8 +45,7 @@ namespace PhotoProcessor.Logic.ServiceLogic
                 created++;
             }
 
-            job.Status = (int)JobStatus.Done;
-            await jobLogic.Upsert(job, cancellationToken);
+            await jobLogic.MarkDone(job, cancellationToken);
 
             return created;
         }

@@ -47,8 +47,7 @@ namespace PhotoProcessor.Logic.ServiceLogic
              
             await identityLogic.AssignForMedia(mediaId, cancellationToken);
 
-            job.Status = (int)JobStatus.Done;
-            await jobLogic.Upsert(job, cancellationToken);
+            await jobLogic.MarkDone(job, cancellationToken);
         }
     }
 }

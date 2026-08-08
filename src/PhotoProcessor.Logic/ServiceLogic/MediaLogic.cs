@@ -2,6 +2,7 @@ using PhotoProcessor.DTO.enums;
 using PhotoProcessor.DTO.ServiceDTOs;
 using PhotoProcessor.Logic.EntityLogic;
 using PhotoProcessor.State.Data.Entities;
+using PhotoProcessor.Logic.Observability;
 using PhotoProcessor.State.Data.Queries;
 using pzellhorn.Core.Messaging;
 using pzellhorn.Core.State.Storage;
@@ -21,7 +22,7 @@ namespace PhotoProcessor.Logic.ServiceLogic
         Task Delete(Guid mediaId, CancellationToken cancellationToken = default);
     }
 
-    public class MediaLogic(ISignedUrlProvider signedUrlProvider, IStorageManager storageManager, IQueuePublisher queuePublisher, JobLogic jobLogic, MediaItemLogic mediaItemLogic, FingerprintLogic fingerprintLogic, ImageEmbeddingLogic imageEmbeddingLogic, TagLogic tagLogic, IVideoLogic videoLogic, IMediaQueries mediaQueries) : IMediaLogic
+    public class MediaLogic(ISignedUrlProvider signedUrlProvider, IStorageManager storageManager, IQueuePublisher queuePublisher, JobLogic jobLogic, MediaItemLogic mediaItemLogic, FingerprintLogic fingerprintLogic, ImageEmbeddingLogic imageEmbeddingLogic, TagLogic tagLogic, IVideoLogic videoLogic, IMediaQueries mediaQueries, PipelineMetrics metrics) : IMediaLogic
     {
         private static readonly TimeSpan UrlLifetime = TimeSpan.FromMinutes(30);
 
@@ -55,6 +56,7 @@ namespace PhotoProcessor.Logic.ServiceLogic
                 JobType: jobType,
                 MediaUri: media.Uri);
             await queuePublisher.Publish(JobQueues.GetQueueForJob(jobType), message, cancellationToken);
+            metrics.JobEnqueued(jobType);
 
             return jobId;
         } 

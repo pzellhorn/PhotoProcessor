@@ -34,8 +34,7 @@ namespace PhotoProcessor.Logic.ServiceLogic
             };
             await imageEmbeddingLogic.Upsert(created, cancellationToken);
 
-            job.Status = (int)JobStatus.Done;
-            await jobLogic.Upsert(job, cancellationToken);
+            await jobLogic.MarkDone(job, cancellationToken);
         }
     }
 }
