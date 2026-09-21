@@ -19,6 +19,11 @@ spec:
           image: photoprocessor/image-embedding-worker:latest
           imagePullPolicy: IfNotPresent
           command: ["uvicorn", "image_embedding.textService:app", "--host", "0.0.0.0", "--port", "8000"]
+          env:
+            - name: HF_HUB_OFFLINE
+              value: "1"
+            - name: TRANSFORMERS_OFFLINE
+              value: "1"
           ports:
             - containerPort: 8000
           readinessProbe:
@@ -26,7 +31,9 @@ spec:
               path: /health
               port: 8000
             initialDelaySeconds: 15
-            periodSeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
           resources:
             requests:
               cpu: "250m"
