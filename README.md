@@ -2,8 +2,9 @@
 
 C# API for media tagging app.
 
-Has two workflows: 
-1. Ingest Photo 
+Has two workflows:
+
+1. Ingest Photo
 2. Ingest Video
 
 Once a photo or video is ingested, a job is enqueued for it on a RabbitMQ queue for each job type registered for that media type. Each job type has its own queue and its own pool of Python workers.
@@ -67,26 +68,27 @@ flowchart LR
 
 ## Running locally
 
-**Prerequisites:** Docker Desktop (Kubernetes enabled for the workers), Terraform ≥ 1.5.
+**Prerequisites:**
+
+1. Docker Desktop (Kubernetes enabled for the workers)
+2. Terraform ≥ 1.5.
 
 All commands run from the repo root (`PhotoProcessor`).
 
-# Infra + API: Postgres/pgvector, RabbitMQ, MinIO, Prometheus (:9090),
-
-# Grafana (:3001), and the API on http://localhost:5030
+Infra + API: Postgres/pgvector, RabbitMQ, MinIO, Prometheus (:9090), Grafana (:3001), and the API on http://localhost:5030
 
 ```bash
 docker compose up -d --build
 ```
 
-# S3: create the media bucket + upload-event bindings
+S3 bucket & upload event binding
 
 ```bash
 terraform -chdir=terraform init
 terraform -chdir=terraform apply
 ```
 
-# Workers: build the images, then deploy to Docker Desktop's Kubernetes
+Build worker images and deploy to local Docker Desktop kubernetes
 
 ```bash
 docker build -t photoprocessor/face-recognition-worker -f src/PhotoProcessor.Logic/Workers/Dockerfile           src/PhotoProcessor.Logic/Workers
