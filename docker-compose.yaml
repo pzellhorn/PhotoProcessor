@@ -58,18 +58,51 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
-  # One-shot pod to await MiniO, create the 'media' bucket, and register the upload event.
-  minio-init:
-    image: minio/mc
+
+  # applies EF Core migrations, then exits
+  api-migrate:
+    image: photoprocessor/api:latest
+    build: &api-build
+      context: .
+      dockerfile: src/PhotoProcessor/Dockerfile
+    command: ["migrate"]
+    environment: &api-env
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__Local: "Host=db;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};Pooling=true"
+      S3__ServiceUrl: "http://minio:9000"
+      S3__AccessKey: minioadmin
+      S3__SecretKey: minioadmin
+      S3__BucketName: media
+      S3__ForcePathStyle: "true"
+      S3__Region: eu-central-2
+      RabbitMq__HostName: rabbitmq
+      RabbitMq__Port: "5672"
+      RabbitMq__UserName: app
+      RabbitMq__Password: app
+      RabbitMq__VirtualHost: "/" 
+      TextEncoder__BaseUrl: "http://host.docker.internal:8001"
+    extra_hosts: &api-hosts
+      - "host.docker.internal:host-gateway"
     depends_on:
-      - minio
-    entrypoint: >
-      /bin/sh -c "
-      until mc alias set local http://minio:9000 minioadmin minioadmin; do echo 'waiting for minio...'; sleep 1; done;
-      mc mb --ignore-existing local/media;
-      mc event add --ignore-existing local/media arn:minio:sqs::PRIMARY:amqp --event put --prefix photos/;
-      mc event add --ignore-existing local/media arn:minio:sqs::SECONDARY:amqp --event put --prefix videos/raw/;
-      "
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    image: photoprocessor/api:latest
+    build: *api-build
+    environment: *api-env
+    extra_hosts: *api-hosts 
+    ports:
+      - "5030:8080"
+    depends_on:
+      api-migrate:
+        condition: service_completed_successfully
+      rabbitmq:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    restart: unless-stopped
 
   postgres-exporter:
     image: prometheuscommunity/postgres-exporter

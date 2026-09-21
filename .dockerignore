@@ -1,0 +1,10 @@
+**/bin/
+**/obj/
+**/__pycache__/
+**/*.pyc
+**/node_modules/
+.git/
+.gitignore
+terraform/
+observability/
+**/*.md

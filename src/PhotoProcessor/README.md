@@ -64,3 +64,27 @@ flowchart LR
     API -->|record one frame media item per keyframe| DB
     API -->|enqueue face + embedding<br/>jobs per frame| PQ[(Photo Queues)]
 ```
+
+## Running locally
+
+**Prerequisites:** Docker Desktop (Kubernetes enabled for the workers), Terraform ≥ 1.5.
+
+All commands run from the repo root (`PhotoProcessor`).
+
+```bash
+# Infra + API: Postgres/pgvector, RabbitMQ, MinIO, Prometheus (:9090),
+# Grafana (:3001), and the API on http://localhost:5030
+docker compose up -d --build
+
+# S3: create the media bucket + upload-event bindings
+terraform -chdir=terraform init
+terraform -chdir=terraform apply
+
+# Workers: build the images, then deploy to Docker Desktop's Kubernetes
+docker build -t photoprocessor/face-recognition-worker -f src/PhotoProcessor.Logic/Workers/Dockerfile           src/PhotoProcessor.Logic/Workers
+docker build -t photoprocessor/image-embedding-worker  -f src/PhotoProcessor.Logic/Workers/Dockerfile.embedding src/PhotoProcessor.Logic/Workers
+docker build -t photoprocessor/video-transcode-worker  -f src/PhotoProcessor.Logic/Workers/Dockerfile.video     src/PhotoProcessor.Logic/Workers
+kubectl apply -f src/PhotoProcessor.Logic/Workers/k8s/
+```
+
+**Tear down:** `terraform -chdir=terraform destroy`, then `docker compose down` (`-v` to wipe volumes).
