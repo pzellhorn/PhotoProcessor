@@ -30,7 +30,8 @@ services:
       timeout: 5s
       retries: 10
   minio:
-    image: minio/minio
+    image: photoprocessor/minio:latest
+    build: ./minio
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: minioadmin
