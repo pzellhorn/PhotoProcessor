@@ -18,49 +18,45 @@ HLS_SEGMENT_SECONDS = 6
 
 
 class VideoTranscodeWorker(BaseConsumer):
-    def process(self, job: dict) -> None:
+    def process(self, job: dict, media: bytes | None) -> None:
         job_id, media_id = job["jobId"], job["mediaId"]
-        results.mark_running(job_id)
-        try:
-            with tempfile.TemporaryDirectory() as work_dir:
-                source_path = os.path.join(work_dir, "source")
-                fetch_media_to_file(media_id, source_path)
+        with tempfile.TemporaryDirectory() as work_dir:
+            source_path = os.path.join(work_dir, "source")
+            fetch_media_to_file(media_id, source_path)
 
-                src_height = self._probe_height(source_path)
-                duration_ms = self._probe_duration_ms(source_path)
+            src_height = self._probe_height(source_path)
+            duration_ms = self._probe_duration_ms(source_path)
 
-                out_dir = os.path.join(work_dir, "derived")
-                os.makedirs(out_dir, exist_ok=True)
+            out_dir = os.path.join(work_dir, "derived")
+            os.makedirs(out_dir, exist_ok=True)
 
-                rungs = [r for r in LADDER if r["height"] <= src_height] or [LADDER[0]]
-                renditions = []
-                for rung in rungs:
-                    self._transcode_rung(source_path, out_dir, rung)
-                    renditions.append({
-                        "format": f"hls-{rung['height']}p",
-                        "entryPath": f"videos/derived/{media_id}/{rung['height']}p/index.m3u8",
-                        "height": rung["height"],
-                        "bitrate": rung["bandwidth"],
-                    })
-
-                self._write_master(out_dir, rungs)
-                self._extract_poster(source_path, os.path.join(out_dir, "poster.jpg")) # the thumbnail frame
-
-                storage.upload_dir(out_dir, f"videos/derived/{media_id}")
-
-                renditions.insert(0, {
-                    "format": "hls",
-                    "entryPath": f"videos/derived/{media_id}/master.m3u8",
+            rungs = [r for r in LADDER if r["height"] <= src_height] or [LADDER[0]]
+            renditions = []
+            for rung in rungs:
+                self._transcode_rung(source_path, out_dir, rung)
+                renditions.append({
+                    "format": f"hls-{rung['height']}p",
+                    "entryPath": f"videos/derived/{media_id}/{rung['height']}p/index.m3u8",
+                    "height": rung["height"],
+                    "bitrate": rung["bandwidth"],
                 })
 
-                results.submit_video(
-                    job_id,
-                    duration_ms=duration_ms,
-                    poster_path=f"videos/derived/{media_id}/poster.jpg",
-                    renditions=renditions,
-                )
-        except PermanentError as e:
-            results.mark_failed(job_id, str(e))
+            self._write_master(out_dir, rungs)
+            self._extract_poster(source_path, os.path.join(out_dir, "poster.jpg")) # the thumbnail frame
+
+            storage.upload_dir(out_dir, f"videos/derived/{media_id}")
+
+            renditions.insert(0, {
+                "format": "hls",
+                "entryPath": f"videos/derived/{media_id}/master.m3u8",
+            })
+
+            results.submit_video(
+                job_id,
+                duration_ms=duration_ms,
+                poster_path=f"videos/derived/{media_id}/poster.jpg",
+                renditions=renditions,
+            )
 
     def _probe_height(self, path: str) -> int:
         out = self._run_probe([

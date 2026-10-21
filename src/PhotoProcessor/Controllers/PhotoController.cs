@@ -38,8 +38,15 @@ namespace PhotoProcessor.API.Controllers
         [HttpGet(nameof(Download))]
         public async Task<ActionResult> Download([FromQuery] Guid mediaId, CancellationToken cancellationToken)
         {
-            (Stream stream, string contentType) = await mediaLogic.GetImage(mediaId, cancellationToken);
-            return File(stream, contentType);
+            (Stream stream, string contentType, string fileName) = await mediaLogic.GetImage(mediaId, cancellationToken);
+            return File(stream, contentType, fileName);
+        }
+
+        [HttpGet(nameof(Display))]
+        public async Task<ActionResult> Display([FromQuery] Guid mediaId, CancellationToken cancellationToken)
+        {
+            Stream stream = await mediaLogic.GetDisplayImage(mediaId, cancellationToken);
+            return File(stream, "image/jpeg");
         }
 
         [HttpGet(nameof(Thumbnail))]

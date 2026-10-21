@@ -17,7 +17,7 @@ namespace PhotoProcessor.Logic.ServiceLogic
 
     public class SearchLogic(ITextEncoder textEncoder, IImageEmbeddingQueries imageEmbeddingQueries, MediaItemLogic mediaItemLogic, PipelineMetrics metrics) : ISearchLogic
     {
-        private const double MaxDistance = 0.75;
+        private const double MaxDistance = 0.80;
 
         public async Task<List<MediaSearchResult>> SearchByText(string text, int count, CancellationToken cancellationToken = default)
         {

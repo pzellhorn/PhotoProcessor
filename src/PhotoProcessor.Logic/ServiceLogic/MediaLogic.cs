@@ -1,6 +1,7 @@
 using PhotoProcessor.DTO.enums;
 using PhotoProcessor.DTO.ServiceDTOs;
 using PhotoProcessor.Logic.EntityLogic;
+using PhotoProcessor.Logic.Imaging;
 using PhotoProcessor.State.Data.Entities;
 using PhotoProcessor.Logic.Observability;
 using PhotoProcessor.State.Data.Queries;
@@ -16,13 +17,14 @@ namespace PhotoProcessor.Logic.ServiceLogic
         Task<MediaLibraryPage> ListLibrary(int page, int pageSize, CancellationToken cancellationToken = default);
         Task<Uri> GetDownloadUrl(Guid mediaId, CancellationToken cancellationToken = default);
 
-        Task<(Stream Stream, string ContentType)> GetImage(Guid mediaId, CancellationToken cancellationToken = default);
+        Task<(Stream Stream, string ContentType, string FileName)> GetImage(Guid mediaId, CancellationToken cancellationToken = default);
+        Task<Stream> GetDisplayImage(Guid mediaId, CancellationToken cancellationToken = default);
         Task<Stream> GetThumbnail(Guid mediaId, int width, CancellationToken cancellationToken = default);
         Task<Stream> GetFaceThumbnail(Guid fingerprintId, int width, CancellationToken cancellationToken = default);
         Task Delete(Guid mediaId, CancellationToken cancellationToken = default);
     }
 
-    public class MediaLogic(ISignedUrlProvider signedUrlProvider, IStorageManager storageManager, IQueuePublisher queuePublisher, JobLogic jobLogic, MediaItemLogic mediaItemLogic, FingerprintLogic fingerprintLogic, ImageEmbeddingLogic imageEmbeddingLogic, TagLogic tagLogic, IVideoLogic videoLogic, IMediaQueries mediaQueries, PipelineMetrics metrics) : IMediaLogic
+    public class MediaLogic(ISignedUrlProvider signedUrlProvider, IStorageManager storageManager, IQueuePublisher queuePublisher, JobLogic jobLogic, MediaItemLogic mediaItemLogic, FingerprintLogic fingerprintLogic, ImageEmbeddingLogic imageEmbeddingLogic, TagLogic tagLogic, IVideoLogic videoLogic, IMediaQueries mediaQueries, PipelineMetrics metrics, IFileConverter fileConverter) : IMediaLogic
     {
         private static readonly TimeSpan UrlLifetime = TimeSpan.FromMinutes(30);
 
@@ -85,12 +87,20 @@ namespace PhotoProcessor.Logic.ServiceLogic
             return await signedUrlProvider.GetDownloadUrl(media.Uri, UrlLifetime, cancellationToken);
         }
  
-        public async Task<(Stream Stream, string ContentType)> GetImage(Guid mediaId, CancellationToken cancellationToken = default)
+        public async Task<(Stream Stream, string ContentType, string FileName)> GetImage(Guid mediaId, CancellationToken cancellationToken = default)
         {
             MediaItem media = await mediaItemLogic.Get(mediaId, cancellationToken) ?? throw new KeyNotFoundException($"Media {mediaId} not found.");
 
             Stream stream = await storageManager.Get(media.Uri, cancellationToken);
-            return (stream, GetContentType(media.Uri));
+            return (stream, GetContentType(media.Uri), Path.GetFileName(media.Uri));
+        }
+
+        public async Task<Stream> GetDisplayImage(Guid mediaId, CancellationToken cancellationToken = default)
+        {
+            MediaItem media = await mediaItemLogic.Get(mediaId, cancellationToken) ?? throw new KeyNotFoundException($"Media {mediaId} not found.");
+
+            await using Stream original = await storageManager.Get(media.Uri, cancellationToken);
+            return await fileConverter.Convert(original, FileFormat.Jpeg, cancellationToken);
         }
 
         public async Task<Stream> GetThumbnail(Guid mediaId, int width, CancellationToken cancellationToken = default)
@@ -100,7 +110,8 @@ namespace PhotoProcessor.Logic.ServiceLogic
             string sourceKey = string.IsNullOrEmpty(media.ThumbnailUri) ? media.Uri : media.ThumbnailUri;
 
             await using Stream original = await storageManager.Get(sourceKey, cancellationToken);
-            SKBitmap source = SKBitmap.Decode(original) ?? throw new InvalidOperationException($"Could not decode image for media {mediaId}.");
+            await using Stream jpeg = await fileConverter.Convert(original, FileFormat.Jpeg, cancellationToken);
+            SKBitmap source = SKBitmap.Decode(jpeg) ?? throw new InvalidOperationException($"Could not decode image for media {mediaId}.");
 
             int targetWidth = Math.Min(width, source.Width);
             int targetHeight = (int)Math.Round(source.Height * (targetWidth / (double)source.Width));
@@ -128,7 +139,8 @@ namespace PhotoProcessor.Logic.ServiceLogic
             MediaItem media = await mediaItemLogic.Get(fingerprint.MediaId, cancellationToken) ?? throw new KeyNotFoundException($"Media {fingerprint.MediaId} not found.");
 
             await using Stream original = await storageManager.Get(media.Uri, cancellationToken);
-            using SKBitmap source = SKBitmap.Decode(original) ?? throw new InvalidOperationException($"Could not decode image for media {fingerprint.MediaId}.");
+            await using Stream jpeg = await fileConverter.Convert(original, FileFormat.Jpeg, cancellationToken);
+            using SKBitmap source = SKBitmap.Decode(jpeg) ?? throw new InvalidOperationException($"Could not decode image for media {fingerprint.MediaId}.");
 
             double marginX = boxWidth * FaceCropMargin;
             double marginY = boxHeight * FaceCropMargin;
@@ -205,6 +217,7 @@ namespace PhotoProcessor.Logic.ServiceLogic
             ".gif" => "image/gif",
             ".webp" => "image/webp",
             ".bmp" => "image/bmp",
+            ".nef" => "image/x-nikon-nef",
             _ => "application/octet-stream",
         };
     }

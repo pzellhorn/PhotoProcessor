@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PhotoProcessor.Logic.Encoding;
+using PhotoProcessor.Logic.Imaging;
 using PhotoProcessor.Logic.Observability;
 using PhotoProcessor.Logic.Scaling;
 using PhotoProcessor.DTO.DTOAdapters.Interfaces;
@@ -41,6 +42,7 @@ namespace PhotoProcessor.Logic.Extensions
             services.AddScoped<ImageEmbeddingLogic>();
             services.AddScoped<UploadSessionLogic>();
 
+            services.AddSingleton<IFileConverter, ImageFileConverter>();
             services.AddScoped<IMediaLogic, MediaLogic>();
             services.AddScoped<IMediaIngestLogic, MediaIngestLogic>();
             services.AddScoped<IVideoLogic, VideoLogic>();

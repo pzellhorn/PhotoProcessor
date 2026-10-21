@@ -8,11 +8,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
+ENV PIP_DEFAULT_TIMEOUT=120 \
+    PIP_RETRIES=10
+
 COPY face_recognition/requirements.txt ./requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
- 
-RUN pip uninstall -y opencv-python opencv-contrib-python || true \
-    && pip install --no-cache-dir --force-reinstall opencv-python-headless
+RUN --mount=type=cache,target=/root/.cache/pip pip install -r requirements.txt
+
+RUN --mount=type=cache,target=/root/.cache/pip pip uninstall -y opencv-python opencv-contrib-python || true \
+    && pip install --force-reinstall "opencv-python-headless<5"
 
 COPY worker_core ./worker_core
 COPY face_recognition ./face_recognition

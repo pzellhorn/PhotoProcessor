@@ -150,7 +150,7 @@ namespace PhotoProcessor.Logic.ServiceLogic
 
         private static MediaItemType GetMediaType(string fileName) => Path.GetExtension(fileName).ToLowerInvariant() switch
         {
-            ".jpg" or ".jpeg" or ".png" or ".gif" or ".webp" or ".bmp" => MediaItemType.Photo,
+            ".jpg" or ".jpeg" or ".png" or ".gif" or ".webp" or ".bmp" or ".nef" => MediaItemType.Photo,
             ".mp4" or ".mov" or ".mkv" or ".avi" or ".webm" or ".m4v" => MediaItemType.Video,
             _ => throw new ArgumentException($"Unsupported file type '{Path.GetExtension(fileName)}'.", nameof(fileName)),
         };

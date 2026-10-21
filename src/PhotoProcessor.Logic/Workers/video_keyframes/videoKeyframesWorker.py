@@ -14,27 +14,23 @@ FRAME_PATTERN = re.compile(r"frame_(\d+)\.jpg$")
 
 
 class VideoKeyframesWorker(BaseConsumer):
-    def process(self, job: dict) -> None:
+    def process(self, job: dict, media: bytes | None) -> None:
         job_id, media_id = job["jobId"], job["mediaId"]
-        results.mark_running(job_id)
-        try:
-            with tempfile.TemporaryDirectory() as work_dir:
-                source_path = os.path.join(work_dir, "source")
-                fetch_media_to_file(media_id, source_path)
+        with tempfile.TemporaryDirectory() as work_dir:
+            source_path = os.path.join(work_dir, "source")
+            fetch_media_to_file(media_id, source_path)
 
-                frame_dir = os.path.join(work_dir, "frames")
-                os.makedirs(frame_dir, exist_ok=True)
+            frame_dir = os.path.join(work_dir, "frames")
+            os.makedirs(frame_dir, exist_ok=True)
 
-                self._extract(source_path, frame_dir)
+            self._extract(source_path, frame_dir)
 
-                frames = self._describe(frame_dir, media_id)
-                if not frames:
-                    raise PermanentError("no frames could be extracted")
+            frames = self._describe(frame_dir, media_id)
+            if not frames:
+                raise PermanentError("no frames could be extracted")
 
-                storage.upload_dir(frame_dir, f"frames/{media_id}")
-                results.submit_keyframes(job_id, frames)
-        except PermanentError as e:
-            results.mark_failed(job_id, str(e))
+            storage.upload_dir(frame_dir, f"frames/{media_id}")
+            results.submit_keyframes(job_id, frames)
 
     def _extract(self, source_path: str, frame_dir: str) -> None:
         cmd = [
