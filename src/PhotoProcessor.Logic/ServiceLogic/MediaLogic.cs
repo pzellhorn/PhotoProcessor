@@ -24,7 +24,7 @@ namespace PhotoProcessor.Logic.ServiceLogic
         Task Delete(Guid mediaId, CancellationToken cancellationToken = default);
     }
 
-    public class MediaLogic(ISignedUrlProvider signedUrlProvider, IStorageManager storageManager, IQueuePublisher queuePublisher, JobLogic jobLogic, MediaItemLogic mediaItemLogic, FingerprintLogic fingerprintLogic, ImageEmbeddingLogic imageEmbeddingLogic, TagLogic tagLogic, IVideoLogic videoLogic, IMediaQueries mediaQueries, PipelineMetrics metrics, IFileConverter fileConverter) : IMediaLogic
+    public class MediaLogic(ISignedUrlProvider signedUrlProvider, IStorageManager storageManager, IQueuePublisher queuePublisher, JobLogic jobLogic, MediaItemLogic mediaItemLogic, FingerprintLogic fingerprintLogic, ImageEmbeddingLogic imageEmbeddingLogic, FlowerIdentificationLogic flowerIdentificationLogic, TagLogic tagLogic, IVideoLogic videoLogic, IMediaQueries mediaQueries, PipelineMetrics metrics, IFileConverter fileConverter) : IMediaLogic
     {
         private static readonly TimeSpan UrlLifetime = TimeSpan.FromMinutes(30);
 
@@ -111,13 +111,13 @@ namespace PhotoProcessor.Logic.ServiceLogic
 
             await using Stream original = await storageManager.Get(sourceKey, cancellationToken);
             await using Stream jpeg = await fileConverter.Convert(original, FileFormat.Jpeg, cancellationToken);
-            SKBitmap source = SKBitmap.Decode(jpeg) ?? throw new InvalidOperationException($"Could not decode image for media {mediaId}.");
+            using SKBitmap source = UprightBitmap.Decode(jpeg) ?? throw new InvalidOperationException($"Could not decode image for media {mediaId}.");
 
             int targetWidth = Math.Min(width, source.Width);
             int targetHeight = (int)Math.Round(source.Height * (targetWidth / (double)source.Width));
 
             SKImageInfo info = new(targetWidth, targetHeight);
-            SKBitmap resized = source.Resize(info, new SKSamplingOptions(SKCubicResampler.Mitchell))
+            using SKBitmap resized = source.Resize(info, new SKSamplingOptions(SKCubicResampler.Mitchell))
                 ?? throw new InvalidOperationException("Thumbnail resize failed.");
             using SKImage image = SKImage.FromBitmap(resized);
             using SKData data = image.Encode(SKEncodedImageFormat.Jpeg, 80);
@@ -140,7 +140,7 @@ namespace PhotoProcessor.Logic.ServiceLogic
 
             await using Stream original = await storageManager.Get(media.Uri, cancellationToken);
             await using Stream jpeg = await fileConverter.Convert(original, FileFormat.Jpeg, cancellationToken);
-            using SKBitmap source = SKBitmap.Decode(jpeg) ?? throw new InvalidOperationException($"Could not decode image for media {fingerprint.MediaId}.");
+            using SKBitmap source = UprightBitmap.Decode(jpeg) ?? throw new InvalidOperationException($"Could not decode image for media {fingerprint.MediaId}.");
 
             double marginX = boxWidth * FaceCropMargin;
             double marginY = boxHeight * FaceCropMargin;
@@ -189,6 +189,8 @@ namespace PhotoProcessor.Logic.ServiceLogic
             List<ImageEmbedding> imageEmbeddings = await imageEmbeddingLogic.GetFor(mediaId, e => e.MediaId, cancellationToken);
             foreach (ImageEmbedding imageEmbedding in imageEmbeddings)
                 await imageEmbeddingLogic.Delete(imageEmbedding.ImageEmbeddingId, cancellationToken);
+
+            await flowerIdentificationLogic.DeleteForMedia(mediaId, cancellationToken);
 
             List<Fingerprint> fingerprints = await fingerprintLogic.GetFor(mediaId, f => f.MediaId, cancellationToken);
             HashSet<Guid> affectedTagIds = new();

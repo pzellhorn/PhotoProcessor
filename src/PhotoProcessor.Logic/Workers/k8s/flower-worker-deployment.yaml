@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flower-identification-worker
+  labels:
+    app: flower-identification-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flower-identification-worker
+  template:
+    metadata:
+      labels:
+        app: flower-identification-worker
+    spec:
+      terminationGracePeriodSeconds: 60
+      containers:
+        - name: worker
+          image: photoprocessor/flower-identification-worker:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: embedding-worker-config
+            - secretRef:
+                name: embedding-worker-secret
+          env: 
+            - name: OMP_NUM_THREADS
+              value: "2"
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "3Gi"
+            limits:
+              cpu: "2"
+              memory: "5Gi"

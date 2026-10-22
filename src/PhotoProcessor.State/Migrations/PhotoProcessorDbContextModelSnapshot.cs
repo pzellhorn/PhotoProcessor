@@ -103,6 +103,117 @@ namespace PhotoProcessor.State.Migrations
                     b.ToTable("fingerprints", (string)null);
                 });
 
+            modelBuilder.Entity("PhotoProcessor.State.Data.Entities.FlowerIdentification", b =>
+                {
+                    b.Property<Guid>("FlowerIdentificationId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("flower_identification_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<Vector>("Embedding")
+                        .IsRequired()
+                        .HasColumnType("vector(768)")
+                        .HasColumnName("embedding");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
+
+                    b.Property<Guid?>("JobId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("job_id");
+
+                    b.Property<Guid>("MediaId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("media_id");
+
+                    b.Property<DateTime>("ModifiedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modified_at")
+                        .HasDefaultValueSql("now()");
+
+                    b.HasKey("FlowerIdentificationId")
+                        .HasName("pk_flower_identifications");
+
+                    b.HasIndex("Embedding")
+                        .HasDatabaseName("ix_flower_identifications_embedding");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Embedding"), "hnsw");
+                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("Embedding"), new[] { "vector_cosine_ops" });
+
+                    b.HasIndex("MediaId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_flower_identifications_media_id")
+                        .HasFilter("is_deleted = false");
+
+                    b.ToTable("flower_identifications", (string)null);
+                });
+
+            modelBuilder.Entity("PhotoProcessor.State.Data.Entities.FlowerPrediction", b =>
+                {
+                    b.Property<Guid>("FlowerPredictionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("flower_prediction_id");
+
+                    b.Property<string>("CommonName")
+                        .HasColumnType("text")
+                        .HasColumnName("common_name");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<string>("Family")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("family");
+
+                    b.Property<Guid>("FlowerIdentificationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("flower_identification_id");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
+
+                    b.Property<DateTime>("ModifiedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modified_at")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<int>("Rank")
+                        .HasColumnType("integer")
+                        .HasColumnName("rank");
+
+                    b.Property<string>("ScientificName")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("scientific_name");
+
+                    b.Property<double>("Score")
+                        .HasColumnType("double precision")
+                        .HasColumnName("score");
+
+                    b.HasKey("FlowerPredictionId")
+                        .HasName("pk_flower_predictions");
+
+                    b.HasIndex("FlowerIdentificationId")
+                        .HasDatabaseName("ix_flower_predictions_flower_identification_id");
+
+                    b.ToTable("flower_predictions", (string)null);
+                });
+
             modelBuilder.Entity("PhotoProcessor.State.Data.Entities.ImageEmbedding", b =>
                 {
                     b.Property<Guid>("ImageEmbeddingId")
@@ -548,6 +659,30 @@ namespace PhotoProcessor.State.Migrations
                     b.Navigation("Tag");
                 });
 
+            modelBuilder.Entity("PhotoProcessor.State.Data.Entities.FlowerIdentification", b =>
+                {
+                    b.HasOne("PhotoProcessor.State.Data.Entities.MediaItem", "MediaItem")
+                        .WithMany()
+                        .HasForeignKey("MediaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_flower_identifications_media_item_media_id");
+
+                    b.Navigation("MediaItem");
+                });
+
+            modelBuilder.Entity("PhotoProcessor.State.Data.Entities.FlowerPrediction", b =>
+                {
+                    b.HasOne("PhotoProcessor.State.Data.Entities.FlowerIdentification", "FlowerIdentification")
+                        .WithMany("Predictions")
+                        .HasForeignKey("FlowerIdentificationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_flower_predictions_flower_identifications_flower_identifica");
+
+                    b.Navigation("FlowerIdentification");
+                });
+
             modelBuilder.Entity("PhotoProcessor.State.Data.Entities.ImageEmbedding", b =>
                 {
                     b.HasOne("PhotoProcessor.State.Data.Entities.MediaItem", "MediaItem")
@@ -626,6 +761,11 @@ namespace PhotoProcessor.State.Migrations
                         .HasConstraintName("fk_video_renditions_media_items_media_id");
 
                     b.Navigation("MediaItem");
+                });
+
+            modelBuilder.Entity("PhotoProcessor.State.Data.Entities.FlowerIdentification", b =>
+                {
+                    b.Navigation("Predictions");
                 });
 
             modelBuilder.Entity("PhotoProcessor.State.Data.Entities.MediaItem", b =>

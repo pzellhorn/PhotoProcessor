@@ -8,6 +8,7 @@ namespace PhotoProcessor.DTO.enums
             JobTypes.ImageEmbedding => [MediaItemType.Photo, MediaItemType.Frame],
             JobTypes.VideoTranscode => [MediaItemType.Video],
             JobTypes.VideoKeyframes => [MediaItemType.Video],
+            JobTypes.FlowerIdentification => [MediaItemType.Photo, MediaItemType.Frame],
             _ => throw new ArgumentOutOfRangeException(nameof(jobType), jobType, "No media type mapping for job type."),
         };
 
@@ -15,6 +16,7 @@ namespace PhotoProcessor.DTO.enums
         [
             JobTypes.FaceRecognition,
             JobTypes.ImageEmbedding,
+            JobTypes.FlowerIdentification,
         ];
 
         public static List<JobTypes> All() =>
@@ -23,6 +25,7 @@ namespace PhotoProcessor.DTO.enums
             JobTypes.VideoTranscode,
             JobTypes.ImageEmbedding,
             JobTypes.VideoKeyframes,
+            JobTypes.FlowerIdentification,
         ];
     }
 }

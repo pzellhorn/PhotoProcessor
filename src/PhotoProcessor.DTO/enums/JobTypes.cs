@@ -12,5 +12,6 @@ namespace PhotoProcessor.DTO.enums
         VideoTranscode = 2,
         ImageEmbedding = 3,
         VideoKeyframes = 4,
+        FlowerIdentification = 5,
     }
 }

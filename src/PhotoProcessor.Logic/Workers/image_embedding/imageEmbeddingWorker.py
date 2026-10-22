@@ -1,6 +1,6 @@
 import io
 
-from PIL import Image
+from PIL import Image, ImageOps
 from sentence_transformers import SentenceTransformer
 
 from image_embedding import MODEL_NAME
@@ -20,7 +20,8 @@ class ImageEmbeddingWorker(BaseConsumer):
 
     def embed(self, image_bytes: bytes) -> list[float]:
         try:
-            image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+            image = Image.open(io.BytesIO(image_bytes))
+            image = ImageOps.exif_transpose(image).convert("RGB")
         except Exception as e:
             raise PermanentError(f"could not decode image: {e}")
 

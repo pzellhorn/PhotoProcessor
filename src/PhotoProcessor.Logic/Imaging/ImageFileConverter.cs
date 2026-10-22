@@ -39,9 +39,7 @@ namespace PhotoProcessor.Logic.Imaging
 
         private static MemoryStream Reencode(byte[] data)
         {
-            using SKData input = SKData.CreateCopy(data);
-            using SKCodec codec = SKCodec.Create(input) ?? throw new InvalidOperationException("Could not decode image.");
-            using SKBitmap bitmap = SKBitmap.Decode(codec);
+            using SKBitmap bitmap = UprightBitmap.Decode(new MemoryStream(data, writable: false)) ?? throw new InvalidOperationException("Could not decode image.");
             using SKImage image = SKImage.FromBitmap(bitmap);
             using SKData encoded = image.Encode(SKEncodedImageFormat.Jpeg, JpegQuality);
 

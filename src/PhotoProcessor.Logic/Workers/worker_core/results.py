@@ -35,6 +35,14 @@ def submit_image_embedding(job_id: str, embedding: list) -> None:
     _post("/api/ImageEmbedding/Submit", {"jobId": job_id, "embedding": embedding})
 
 
+def submit_flower_identification(job_id: str, embedding: list, predictions: list) -> None:
+    _post("/api/Flower/Submit", {
+        "jobId": job_id,
+        "embedding": embedding,
+        "predictions": predictions,
+    })
+
+
 def submit_keyframes(job_id: str, frames: list) -> None:
     _post("/api/Video/SubmitKeyframes", {"jobId": job_id, "frames": frames}, timeout=600.0)
 

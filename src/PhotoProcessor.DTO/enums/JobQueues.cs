@@ -8,6 +8,7 @@ namespace PhotoProcessor.DTO.enums
             JobTypes.VideoTranscode => "jobs.video-transcode",
             JobTypes.ImageEmbedding => "jobs.image-embedding",
             JobTypes.VideoKeyframes => "jobs.video-keyframes",
+            JobTypes.FlowerIdentification => "jobs.flower-identification",
             _ => throw new ArgumentOutOfRangeException(nameof(jobType), jobType, "No queue mapping for job type."),
         };
     }

@@ -40,9 +40,13 @@ namespace PhotoProcessor.Logic.Extensions
             services.AddScoped<TagTypeLogic>();
             services.AddScoped<VideoRenditionLogic>();
             services.AddScoped<ImageEmbeddingLogic>();
+            services.AddScoped<FlowerIdentificationLogic>();
+            services.AddScoped<FlowerPredictionLogic>();
             services.AddScoped<UploadSessionLogic>();
 
             services.AddSingleton<IFileConverter, ImageFileConverter>();
+            services.AddSingleton<FlowerLabelCache>();
+            services.AddScoped<IFlowerGate, FlowerGate>();
             services.AddScoped<IMediaLogic, MediaLogic>();
             services.AddScoped<IMediaIngestLogic, MediaIngestLogic>();
             services.AddScoped<IVideoLogic, VideoLogic>();
@@ -50,6 +54,8 @@ namespace PhotoProcessor.Logic.Extensions
             services.AddScoped<IIdentityLogic, IdentityLogic>();
             services.AddScoped<IFingerprintSearchLogic, FingerprintSearchLogic>();
             services.AddScoped<IImageEmbeddingSubmissionLogic, ImageEmbeddingSubmissionLogic>();
+            services.AddScoped<IFlowerIdentificationSubmissionLogic, FlowerIdentificationSubmissionLogic>();
+            services.AddScoped<IFlowerIdentificationQueryLogic, FlowerIdentificationQueryLogic>();
             services.AddScoped<ISearchLogic, SearchLogic>();
             services.AddScoped<IProgressLogic, ProgressLogic>();
             services.AddScoped<IResumableUploadLogic, ResumableUploadLogic>();
